@@ -128,9 +128,9 @@ class GamblerHand(Hand):
         Check whether the hand is splittable. 
         Requirements:
         1) Hand is made up of two cards.
-        2) The name of the two cards matches (e.g. King-King, Five-Five, etc.)
+        2) The value of the two cards matches (e.g. King-King, Five-Five, etc.)
         """
-        return len(self.cards) == 2 and self.cards[0].name == self.cards[1].name
+        return len(self.cards) == 2 and self.cards[0].value == self.cards[1].value
 
     def is_doubleable(self):
         """
