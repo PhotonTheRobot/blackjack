@@ -18,11 +18,12 @@ def render_after(instance_method):
 
 class GameController:
 
-    def __init__(self, gambler, dealer, shoe, strategy, verbose=True, max_turns=None):
+    def __init__(self, gambler, dealer, shoe, penetration, strategy, verbose=True, max_turns=None):
         # Configured models from game setup
         self.gambler = gambler
         self.dealer = dealer
         self.shoe = shoe
+        self.penetration = penetration
 
         # Strategy to employ for in-game decision making
         self.strategy = strategy

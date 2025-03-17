@@ -5,9 +5,11 @@ from blackjack.models.deck import Deck
 
 class Shoe:
 
-    def __init__(self, num_decks):
+    def __init__(self, num_decks, penetration):
         # Create the decks of cards.
         self.decks = [Deck() for _ in range(num_decks)]
+        self.totalCards = num_decks * 52
+        self.startOfLastHand = self.totalCards - ( self.penetration * 52 )
 
         # List to hold the cards to be dealt, in the order in which they'll be dealt.
         self.card_pile = []
@@ -35,9 +37,11 @@ class Shoe:
 
     def deal_card(self):
         """Deal a card from the shoe (reshuffle if pile exhausted)."""
-        if not self.card_pile:
+        if not self.card_pile or self.card_pile.count <= self.startOfLastHand:
             self.reset_card_pile()
+            
         return self.card_pile.pop()
+
 
     def deal_n_cards(self, num_cards):
         """Deal a set number of cards from the shoe."""
