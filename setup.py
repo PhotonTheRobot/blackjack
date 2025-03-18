@@ -1,10 +1,10 @@
 from distutils.core import setup
 
 setup(
-    name='Blackjack',
+    name='OddsBeater',
     version='1.0',
     description='Blackjack CLI interactive game and simulator.',
-    author='Ellis Andrews',
+    author='Alan O\'Kelly',
     packages=['blackjack'],
     install_requires=['matplotlib', 'pandas', 'tqdm']
 )

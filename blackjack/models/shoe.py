@@ -9,7 +9,7 @@ class Shoe:
         # Create the decks of cards.
         self.decks = [Deck() for _ in range(num_decks)]
         self.totalCards = num_decks * 52
-        self.startOfLastHand = self.totalCards - ( self.penetration * 52 )
+        self.startOfLastHand = self.totalCards - ( penetration * 52 )
 
         # List to hold the cards to be dealt, in the order in which they'll be dealt.
         self.card_pile = []
@@ -25,15 +25,15 @@ class Shoe:
                 cards.append(card)
         return cards
 
-    def shuffled_cards(self):
+    def shuffle_cards(self):
         """Shuffle the shoe's cards."""
         cards = self.cards()
         random.shuffle(cards)
         return cards
 
-    def reset_card_pile(self):
+    def start_new_shoe(self):
         """Reset the shoe's card pile."""
-        self.card_pile = self.shuffled_cards()
+        self.card_pile = self.shuffle_cards()
 
     def deal_card(self):
         """Deal a card from the shoe (reshuffle if pile exhausted)."""

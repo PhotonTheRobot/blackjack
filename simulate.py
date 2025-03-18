@@ -29,13 +29,14 @@ if __name__ == '__main__':
 
     # Command line args
     parser = ArgumentParser()
-    parser.add_argument('-a', '--auto-wager', help='Initial Gambler auto-wager', type=float, default=100.0)
-    parser.add_argument('-b', '--bankroll', help='Initial Gambler bankroll', type=float, default=1000.0)
+    parser.add_argument('-a', '--auto-wager', help='Initial Gambler auto-wager', type=float, default=15.0)
+    parser.add_argument('-b', '--bankroll', help='Initial Gambler bankroll', type=float, default=10000.0)
     parser.add_argument('-c', '--concurrency', help='Number of game subprocesses to run simultaneously', type=int, default=4)
-    parser.add_argument('-d', '--decks', help='Number of decks to play with', type=int, default=3)
-    parser.add_argument('-g', '--games', help='Number of games to simulate', type=int, default=100)
+    parser.add_argument('-d', '--decks', help='Number of decks to play with', type=int, default=6)
+    parser.add_argument('-p', '--penetration', help='Number of decks worth of penetration', type=float, default=1.0)
+    parser.add_argument('-g', '--games', help='Number of games to simulate', type=int, default=1000)
     parser.add_argument('-s', '--strategy', help='Name of the gameplay strategy to use', default='default', choices=STRATEGY_MAP.keys())
-    parser.add_argument('-t', '--turns', help='Max number of turns to play per game', type=int, default=100)
+    parser.add_argument('-t', '--turns', help='Max number of turns to play per game', type=int, default=1000)
     args = parser.parse_args()
 
     # Clear the terminal screen.
@@ -45,7 +46,7 @@ if __name__ == '__main__':
     strategy = STRATEGY_MAP[args.strategy]
 
     # Load the game configuration (in this case, the 'simulation' configuration).
-    configuration = get_simulation_configuration(args.bankroll, args.auto_wager, args.decks, strategy, args.turns)
+    configuration = get_simulation_configuration(args.bankroll, args.auto_wager, args.decks, args.penetration, strategy, args.turns)
 
     # Multiprocess game execution and collect MetricTrackers from each simulated game (with a progress bar!)
     print('Running Game Simulations...\n')
