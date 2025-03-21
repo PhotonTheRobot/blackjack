@@ -1,48 +1,67 @@
 import random
+import math
 
-from blackjack.models.deck import Deck
-
+from blackjack.models.Deck import Deck
 
 class Shoe:
+    #private vars
+    _isLastHand = False
+    _decks = []
+    _totalCardsInDeck = 0
+    _totalCardsDrawn = 0
+    _startOfLastHand = 0
+    _runningCount = 0
+    _cards = []
+    _cardLookup = {}
+    
+    #getters
+    @property
+    def IsLastHand(self):
+        return self._isLastHand
+    
+    
+    @property
+    def DecksRemaining(self):
+        return math.roof((self._totalCardsInDeck - self._totalCardsDrawn) / 52)    
 
+
+    #constructor
     def __init__(self, num_decks, penetration):
-        # Create the decks of cards.
-        self.decks = [Deck() for _ in range(num_decks)]
-        self.totalCards = num_decks * 52
-        self.startOfLastHand = self.totalCards - ( penetration * 52 )
-
-        # List to hold the cards to be dealt, in the order in which they'll be dealt.
-        self.card_pile = []
-
-        # Initialize with a shuffled card pile so the shoe is ready to be played.
-        self.reset_card_pile()
-
-    def cards(self):
-        """Get all cards belonging to the shoe (through decks)."""
-        cards = []
+        self.decks = [Deck(i) for i in range(num_decks)]
+        self._totalCardsInDeck = num_decks * 52
+        self.startOfLastHand = self._totalCardsInDeck - ( penetration * 52 )        
+        self.cards = np.zeros((self._totalCardsInDeck), dtype=int)   
+        
+        cardIteration = 0
         for deck in self.decks:
-            for card in deck.cards:
-                cards.append(card)
-        return cards
-
-    def shuffle_cards(self):
-        """Shuffle the shoe's cards."""
-        cards = self.cards()
-        random.shuffle(cards)
-        return cards
-
-    def start_new_shoe(self):
-        """Reset the shoe's card pile."""
-        self.card_pile = self.shuffle_cards()
-
-    def deal_card(self):
-        """Deal a card from the shoe (reshuffle if pile exhausted)."""
-        if not self.card_pile or self.card_pile.count <= self.startOfLastHand:
-            self.reset_card_pile()
-            
-        return self.card_pile.pop()
+            for card in deck.cards:                
+                #fill numpy array with the count value of each card
+                self.cardLookup[card.cardId] = card
+                self.cards[cardIteration] = card.cardId
+                cardIteration += 1
+        
+        self.ResetShoe()
 
 
-    def deal_n_cards(self, num_cards):
-        """Deal a set number of cards from the shoe."""
-        return [self.deal_card() for _ in range(num_cards)]
+    def ResetShoe(self):
+        self._runningCount = 0
+        self._totalCardsDrawn = 0
+        self._isLastHand = False
+        np.random.shuffle(self.cards) 
+
+
+    def DealCard(self):
+
+        if self._totalCardsDrawn >= self._startOfLastHand:
+            self._isLastHand = True
+        
+        #pull a card from the front of the shoe
+        cardId = self.cards[self._totalCardsDrawn]
+
+        #return the card object from a hashtable lookup
+        drawnCard = self.cardLookup[cardId]
+        self._runningCount += drawnCard.ApValue
+        self._totalCardsDrawn += 1
+
+        return drawnCard        
+

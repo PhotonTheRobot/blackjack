@@ -1,41 +1,62 @@
+import uuid
+from blackjack.values.CardSuits import CardValues
+
 class Card:
+    #private vars
+    _cardId = None
+    _deckId = None
+    _suit = None
+    _rank = 0
+    _apValue = 0
+    _countValue = 0
+    _runningCountValue = 0
 
-    SUITS = ['Spades', 'Hearts', 'Clubs', 'Diamonds']
-    RANKS = [
-        ('Ace', [1, 11]),
-        ('2', 2),
-        ('3', 3),
-        ('4', 4),
-        ('5', 5),
-        ('6', 6),
-        ('7', 7),
-        ('8', 8),
-        ('9', 9),
-        ('10', 10),
-        ('Jack', 10),
-        ('Queen', 10),
-        ('King', 10)
-    ]
+    def __init__(self, suit, rank, deckId):
+        self._cardId = rank * deckId #unique card id, influenced by deck id
+        self._deckId = deckId
+        self._suit = suit
+        self._rank = rank
+        
+        if rank <= 6:
+            self._apValue = 1
+        elif rank >= 10:
+            self._apValue = -1
+            
+        if rank < 10:
+            self._countValue = (rank)
+        elif rank >= 10 and rank <= 13:
+            self._countValue = (10)
+        else: #ace
+            self._countValue = (1, 11)
 
-    def __init__(self, suit, name, value):
-        self.suit = suit
-        self.name = name
-        self.value = value
+    #getters
+    @property
+    def CardId(self):
+        return self._cardId
+    
+    @property
+    def DeckId(self):
+        return self._deckId
+    
+    @property
+    def Suit(self):
+        return self._suit
+    
+    @property
+    def Rank(self):
+        return self._rank
+    
+    @property
+    def CountValue(self):
+        return self._countValue
+    
+    @property
+    def RunningCountValue(self):
+        return self._runningCountValue
 
-    def __str__(self):
-        return f"{self.name} of {self.suit}"
-
-    def __repr__(self):
-        return self.__str__()
-
-    def is_ace(self):
-        """Check whether the card is an ace."""
-        return self.name == 'Ace'
-
-    def is_facecard(self):
-        """Check whether the card is a facecard."""
-        return self.value == 10
-
-    def csv_format(self):
+    def GetCsvFormat(self):
         """String representation of the card for Strategy CSVs."""
-        return 'A' if self.is_ace() else str(self.value)
+        if self.IsAce():
+            return 'A'
+        else:
+            return str(self._countValue)

@@ -5,6 +5,5 @@ setup(
     version='1.0',
     description='Blackjack CLI interactive game and simulator.',
     author='Alan O\'Kelly',
-    packages=['blackjack'],
-    install_requires=['matplotlib', 'pandas', 'tqdm']
+    packages=['blackjack']
 )

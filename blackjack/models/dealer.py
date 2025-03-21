@@ -1,21 +1,24 @@
+from blackjack.values.CardRanks import CardRank
+
+
 class Dealer:
+    _hand = None
+    _name = 'Dealer'
 
-    def __init__(self, hand=None):
-        self.name = 'Dealer'
-        self.hand = hand
+    def __init__(self, hand=[]):
+        self._hand = hand
 
-    def up_card(self):
-        """Shortcut to the dealer's hand's up_card."""
-        return self.hand.up_card()
+    def UpCard(self):
+        return self._hand[0]
 
-    def is_showing_ace(self):
+    def IsShowingAce(self):
         """Check whether the dealer is showing an ace."""
-        return self.up_card().is_ace()
+        return self.UpCard() == CardRank.Ace
 
-    def is_showing_face_card(self):
+    def IsShowingFaceCard(self):
         """Check whether the dealer is showing a face card."""
-        return self.up_card().is_facecard()
-
-    def discard_hand(self):
+        return self.UpCard() == CardRank.King or self.UpCard() == CardRank.Queen or self.UpCard() == CardRank.Jack or self.UpCard() == CardRank.Ten
+    
+    def DiscardHand(self):
         """Reset the dealer's hand."""
-        self.hand = None
+        self._hand = []

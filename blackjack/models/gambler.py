@@ -3,94 +3,85 @@ from blackjack.display_utils import money_format
 
 
 class Gambler:
+    _bankroll = 0
+    _isRuined = False
+    _hands = []
+    _defaultWager = 0
 
-    def __init__(self, name, bankroll=0, auto_wager=0, hands=None):
-        self.name = name
-        self.bankroll = bankroll
-        self.auto_wager = auto_wager
-        self.hands = hands or []
 
-    def __str__(self):
-        return f"Player: {self.name} | Bankroll: {money_format(self.bankroll)}"
+    def __init__(self, bankroll=0, hands=[]):
+        self._bankroll = bankroll
+        self._hands = hands
+        
 
-    def discard_hands(self):
-        """Reset hands list."""
+    # def __str__(self):
+    #     return f"Player: {self.name} | Bankroll: {money_format(self.bankroll)}"
+
+    def EmptyHands(self):
+        """Empty the hand."""
         self.hands = []
 
-    def is_finished(self):
-        """Check if the gambler is finished playhing."""
-        # Player is finished if they've set their wager to $0.00, or they're out of money
-        return self.auto_wager == 0 or self.bankroll == 0
 
-    def first_hand(self):
+    def GetHand(self, handNumber):
         """Helper method for action that happens on the initial hand dealt to the gambler."""
-        return self.hands[0]
+        return self.hands[handNumber]
+    
+    
+    def CanPlaceWager(self, wager):
+        """Check if a wager can be placed."""
+        return wager <= self.bankroll
 
-    def _add_bankroll(self, amount):
+
+    def AddToBankroll(self, amount):
         """Add an amount to the bankroll."""
         self.bankroll += amount
 
-    def _subtract_bankroll(self, amount):
-        """Subtract an amount from the bankroll."""
-        if amount <= self.bankroll:
+
+    def RemoveFromBankroll(self, amount):
+        if self.CanPlaceWager():
             self.bankroll -= amount
         else:
-            raise OverdraftError('Bankroll cannot go negative')
+            raise InsufficientBankrollError('Insufficient bankroll to place wager')
 
-    def payout(self, amount):
-        """Public facing method for adding bankroll."""
-        self._add_bankroll(amount)
-
-    def can_place_wager(self, amount):
-        """Check whether the gambler has sufficient bankroll to place a wager."""
-        return amount <= self.bankroll
-
-    def can_place_auto_wager(self):
-        """Check whether the gambler has sufficient bankroll to place the auto-wager."""
-        return self.can_place_wager(self.auto_wager) 
-
-    def _insurance_wager_amount(self):
-        """Calculate insurance wager amount in a single place for ease of maintenance."""
-        return self.first_hand().wager / 2
-
-    def can_place_insurance_wager(self):
-        """Check whether the gambler has sufficient bankroll to place an insurance wager."""
-        return self.can_place_wager(self._insurance_wager_amount())
-
-    def place_hand_wager(self, wager, hand):
+    def PlaceWager(self, wager, handNumber):
         """Place a wager on a hand. Additive so can be used to double down."""
-        if self.can_place_wager(wager):
-            self._subtract_bankroll(wager)  
-            hand.wager += wager
+        self._subtract_bankroll(wager)  
+        if self.bankroll <= 0:
+            raise OverdraftError('The player\'s bankroll has been ruined')
+        
+        self.Hands[handNumber].wager = wager
+        
+
+    def BuyInsurance(self, handNumber):
+        hand = self.hands[handNumber]
+        insuranceAmount = hand.wager / 2
+        
+        if self.CanPlaceWager(insuranceAmount):
+            self.RemoveFromBankroll(insuranceAmount)
+            hand.insurance = insuranceAmount
         else:
-            raise InsufficientBankrollError('Insufficient bankroll to place hand wager')    
+            raise InsufficientBankrollError('Insufficient bankroll to place insurance bet')
 
-    def place_auto_wager(self):
-        """Place the auto-wager on the dealt hand."""
-        self.place_hand_wager(self.auto_wager, self.first_hand())
 
-    def place_insurance_wager(self):
-        """Place an insurance wager on the first hand."""
-        insurance_amount = self._insurance_wager_amount()
-        if self.can_place_insurance_wager():
-            self._subtract_bankroll(insurance_amount)
-            self.first_hand().insurance = insurance_amount
-        else:
-            raise InsufficientBankrollError('Insufficient bankroll to place insurance wager')
-
-    def zero_auto_wager(self):
-        """Set the auto_wager to 0."""
-        self.auto_wager = 0
-
-    def set_new_auto_wager(self, auto_wager):
-        """Set a new auto-wager."""
-        # Make sure bankroll is large enough
-        if self.can_place_wager(auto_wager):
-            self.auto_wager = auto_wager
-        else:
-            raise InsufficientBankrollError('Insufficient bankroll to set auto-wager')
-
-    def settle_up(self, dealer_hand):
+    def SettleUp(self, dealer_hand):
         """Compare Gambler hands to a given Dealer hand."""
         for hand in self.hands:
             hand.settle_up(dealer_hand)
+
+
+    def DoubleDown(self, handNumber):
+        """Double down on a hand."""
+        hand = self.hands[handNumber]
+        wager = hand.wager
+        self.PlaceWager(wager, handNumber)
+        hand.double_down = True
+    
+    
+    def SplitHand(self, handNumber):
+        """Split a hand."""
+        hand = self.hands[handNumber]
+        wager = hand.wager
+        self.PlaceWager(wager, handNumber)
+        new_hand = Hand([hand.cards.pop()])
+        new_hand.wager = wager
+        self.hands.append(new_hand)

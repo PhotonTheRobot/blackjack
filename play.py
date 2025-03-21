@@ -3,7 +3,7 @@
 from argparse import ArgumentParser
 
 from blackjack.analytics.single_game_analyzer import SingleGameAnalyzer
-from blackjack.configuration import get_interactive_configuration
+from blackjack.configuration import get_simulation_configuration
 from blackjack.display_utils import clear, header
 from blackjack.game_setup import setup_game
 
@@ -19,7 +19,7 @@ if __name__ == '__main__':
     clear()
 
     # Load the game configuration (in this case, the 'interactive' configuration).
-    configuration = get_interactive_configuration(args.default)
+    configuration = get_simulation_configuration(args.default)
 
     # Set up the game using the loaded configuration.
     game = setup_game(configuration)
@@ -31,4 +31,3 @@ if __name__ == '__main__':
     print(header('ANALYTICS'))
     analyzer = SingleGameAnalyzer(**game.metric_tracker.serialize_metrics())
     analyzer.print_summary()
-    analyzer.create_plots()
