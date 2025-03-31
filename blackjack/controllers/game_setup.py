@@ -1,9 +1,8 @@
 
-from blackjack.game_controller import GameController
-from blackjack.models.dealer import Dealer
-from blackjack.models.gambler import Gambler
-from blackjack.models.shoe import Shoe
-
+from blackjack.GameController import GameController
+from blackjack.models.Dealer import Dealer
+from blackjack.models.Gambler import Gambler
+from blackjack.models.Shoe import Shoe
 
 def setup_game(config):
     """Set up the GameController class that runs the game from a configuration dictionary."""
@@ -16,11 +15,12 @@ def setup_game(config):
     strategy = config['gameplay']['strategy']
     verbose = config['gameplay']['verbose']
     max_turns = config['gameplay']['max_turns']
+    penetration = config['shoe']['penetration']
 
     # Create core components of the game: A Gambler, a Dealer, and a Shoe of cards.
-    gambler = Gambler(name, bankroll=bankroll, auto_wager=auto_wager)
+    gambler = Gambler(bankroll, auto_wager)
     dealer = Dealer()
-    shoe = Shoe(number_of_decks)
+    shoe = Shoe(number_of_decks, penetration)
 
     # Instantiate and return the central controller of the game.
     return GameController(gambler, dealer, shoe, strategy(), verbose=verbose, max_turns=max_turns)

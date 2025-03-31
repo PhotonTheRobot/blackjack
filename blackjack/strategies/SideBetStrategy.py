@@ -1,15 +1,11 @@
 import os
-
 from pandas import read_csv
-
-from blackjack.strategies.BasePrimaryStrategy import BasePrimaryStrategy
+from blackjack.strategies.BaseSidebetStrategy import BaseSidebetStrategy
 from blackjack.values.PlayerAction import PlayerActions
-
 
 DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 
-
-class AdvancedPlayStrategy(BasePrimaryStrategy):
+class SideBetStrategy(BaseSidebetStrategy):
     _hitString = 'Hit'
     _standString = 'Stand'
     _doubleString = 'Double'

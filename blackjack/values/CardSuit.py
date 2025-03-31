@@ -1,7 +1,5 @@
-from enum import Enum
-
 # class syntax
-class CardSuits(Enum):
+class CardSuit():
     Spades = 1
     Hearts = 2
     Clubs = 3

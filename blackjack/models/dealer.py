@@ -1,4 +1,4 @@
-from blackjack.values.CardRanks import CardRank
+from blackjack.values.CardRank import CardRank
 
 
 class Dealer:

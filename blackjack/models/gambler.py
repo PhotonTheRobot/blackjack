@@ -1,5 +1,5 @@
-from blackjack.models.exceptions.Exception import InsufficientBankrollError, OverdraftError
-from blackjack.controllers.display_utils import money_format
+from blackjack.models.exceptions.InsufficientBankrollException import InsufficientBankrollException
+from blackjack.models.exceptions.OverdraftException import OverdraftException
 
 
 class Gambler:
@@ -41,13 +41,13 @@ class Gambler:
         if self.CanPlaceWager():
             self.bankroll -= amount
         else:
-            raise InsufficientBankrollError('Insufficient bankroll to place wager')
+            raise InsufficientBankrollException('Insufficient bankroll to place wager')
 
     def PlaceWager(self, wager, handNumber):
         """Place a wager on a hand. Additive so can be used to double down."""
         self._subtract_bankroll(wager)  
         if self.bankroll <= 0:
-            raise OverdraftError('The player\'s bankroll has been ruined')
+            raise OverdraftException('The player\'s bankroll has been ruined')
         
         self.Hands[handNumber].wager = wager
         
@@ -60,13 +60,13 @@ class Gambler:
             self.RemoveFromBankroll(insuranceAmount)
             hand.insurance = insuranceAmount
         else:
-            raise InsufficientBankrollError('Insufficient bankroll to place insurance bet')
+            raise InsufficientBankrollException('Insufficient bankroll to place insurance bet')
 
 
     def SettleUp(self, dealer_hand):
         """Compare Gambler hands to a given Dealer hand."""
         for hand in self.hands:
-            hand.settle_up(dealer_hand)
+            hand._SettleUp(dealer_hand)
 
 
     def DoubleDown(self, handNumber):

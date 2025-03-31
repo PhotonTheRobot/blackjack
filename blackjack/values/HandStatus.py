@@ -1,6 +1,4 @@
-from enum import Enum
-
-class HandStatus(Enum):
+class HandStatus():
     Pending = 0
     Playing = 1
     Blackjack = 2

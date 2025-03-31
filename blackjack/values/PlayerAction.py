@@ -1,6 +1,4 @@
-from enum import Enum
-
-class PlayerActions(Enum):
+class PlayerActions():
     Stay = 0
     Hit = 1
     Double = 2

@@ -1,4 +1,4 @@
 
-class OverdraftError(Error):
+class OverdraftException(Exception):
     """Custom exception to raise when a player's bankroll attempts to go below zero."""
     pass

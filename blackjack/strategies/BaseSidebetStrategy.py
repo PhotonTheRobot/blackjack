@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 
-class BaseStrategy(ABC):
+class BaseSidebetStrategy(ABC):
     """Abstract base class that lays out the methods that must be implemented by all Strategies for in-game decisions."""
 
     @abstractmethod

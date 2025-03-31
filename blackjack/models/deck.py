@@ -1,23 +1,25 @@
 from blackjack.models.Card import Card
 import uuid
 import numpy as np
-
-
-from blackjack.values.CardSuits import CardNumbers, CardSuits
+from blackjack.values.CardRank import CardRank
+from blackjack.values.CardSuit import CardSuit
 
 class Deck:
 
     _deckId = None
-    _allSuits = [CardSuits.HEARTS, CardSuits.DIAMONDS, CardSuits.CLUBS, CardSuits.SPADES]
-    _allRanks = [CardNumbers.ACE, CardNumbers.TWO, CardNumbers.THREE, CardNumbers.FOUR, CardNumbers.FIVE, CardNumbers.SIX, CardNumbers.SEVEN, CardNumbers.EIGHT, CardNumbers.NINE, CardNumbers.TEN, CardNumbers.JACK, CardNumbers.QUEEN, CardNumbers.KING]
+    _allSuits = [CardSuit.Hearts, CardSuit.Diamonds, CardSuit.Clubs, CardSuit.Spades]
+    _allRanks = [CardRank.Ace, CardRank.Two, CardRank.Three, CardRank.Four, CardRank.Five,
+                 CardRank.Six, CardRank.Seven, CardRank.Eight, CardRank.Nine, CardRank.Ten,
+                 CardRank.Jack, CardRank.Queen, CardRank.King]
+    _cards = np.zeros((4, 13), dtype=int)
     
-    #make an empty 3d numpy array of 52 cards
-    cards = np.zeros((4, 13), dtype=int)
+    @property
+    def Cards(self):
+        return self._cards
     
-    def __init__(self, deckNumber):
-        self._deckId = uuid.uuid4()
-        self._cards = np.zeros((4, 13), dtype=int)
-        
+    #constructor
+    def __init__(self, deckId):
+        self._deckId = deckId
         self._generateCards()
 
 
@@ -25,7 +27,8 @@ class Deck:
         """Generate the cards for the deck."""
         for suit in self._allSuits:
             for rank in self._allRanks:
-                self.allCards[suit][rank] = Card(suit, rank, self._deckId)
+                # Starting at Rank-2 because the lowest card value is 2
+                self._cards[suit-1][rank-2] = Card(suit, rank, self._deckId)
 
                     
                         

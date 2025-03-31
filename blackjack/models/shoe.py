@@ -1,5 +1,5 @@
-import random
 import math
+import numpy as np
 
 from blackjack.models.Deck import Deck
 
@@ -11,7 +11,7 @@ class Shoe:
     _totalCardsDrawn = 0
     _startOfLastHand = 0
     _runningCount = 0
-    _cards = []
+    _cardIds = [] 
     _cardLookup = {}
     
     #getters
@@ -30,14 +30,14 @@ class Shoe:
         self.decks = [Deck(i) for i in range(num_decks)]
         self._totalCardsInDeck = num_decks * 52
         self.startOfLastHand = self._totalCardsInDeck - ( penetration * 52 )        
-        self.cards = np.zeros((self._totalCardsInDeck), dtype=int)   
+        self._cards = np.zeros((self._totalCardsInDeck), dtype=int)   
         
         cardIteration = 0
         for deck in self.decks:
-            for card in deck.cards:                
+            for card in deck.Cards:                
                 #fill numpy array with the count value of each card
-                self.cardLookup[card.cardId] = card
-                self.cards[cardIteration] = card.cardId
+                self._cardLookup[card.cardId] = card
+                self._cardIds[cardIteration] = card.cardId
                 cardIteration += 1
         
         self.ResetShoe()
@@ -60,7 +60,7 @@ class Shoe:
 
         #return the card object from a hashtable lookup
         drawnCard = self.cardLookup[cardId]
-        self._runningCount += drawnCard.ApValue
+        self._runningCount += drawnCard.AdvantagedPlayerValue
         self._totalCardsDrawn += 1
 
         return drawnCard        

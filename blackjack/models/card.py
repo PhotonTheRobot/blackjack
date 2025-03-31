@@ -1,19 +1,14 @@
-import uuid
-from blackjack.values.CardSuits import CardValues
 
 class Card:
     #private vars
     _cardId = None
-    _deckId = None
     _suit = None
     _rank = 0
     _apValue = 0
     _countValue = 0
-    _runningCountValue = 0
 
     def __init__(self, suit, rank, deckId):
-        self._cardId = rank * deckId #unique card id, influenced by deck id
-        self._deckId = deckId
+        self._cardId = rank + (deckId * 100) #unique card id, influenced by deck id
         self._suit = suit
         self._rank = rank
         
@@ -33,11 +28,7 @@ class Card:
     @property
     def CardId(self):
         return self._cardId
-    
-    @property
-    def DeckId(self):
-        return self._deckId
-    
+
     @property
     def Suit(self):
         return self._suit
@@ -51,8 +42,8 @@ class Card:
         return self._countValue
     
     @property
-    def RunningCountValue(self):
-        return self._runningCountValue
+    def AdvantagedPlayerValue(self):
+        return self._apValue
 
     def GetCsvFormat(self):
         """String representation of the card for Strategy CSVs."""

@@ -3,16 +3,16 @@
 import multiprocessing as mp
 from argparse import ArgumentParser
 
-from tqdm import tqdm
-
 from blackjack.analytics.multi_game_analyzer import MultiGameAnalyzer
 from blackjack.controllers.configuration import get_simulation_configuration
 from blackjack.controllers.display_utils import clear, header
 from blackjack.controllers.game_setup import setup_game
+from blackjack.strategies import AdvancedPlayStrategy
+from blackjack.strategies.SideBetStrategy import SideBetStrategy
 
 STRATEGY_MAP = {
-    'blackjack': DefaultStaticStrategy,
-    'insurance': InsuranceStaticStrategy
+    'blackjack': AdvancedPlayStrategy,
+    'sidebet': SideBetStrategy
 }
 
 
@@ -32,7 +32,7 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--decks', help='Number of decks to play with', type=int, default=6)
     parser.add_argument('-p', '--penetration', help='Number of decks worth of penetration', type=float, default=1.0)
     parser.add_argument('-g', '--games', help='Number of games to simulate', type=int, default=1000)
-    parser.add_argument('-s', '--strategy', help='Name of the gameplay strategy to use', default='default', choices=STRATEGY_MAP.keys())
+    parser.add_argument('-s', '--strategy', help='Name of the gameplay strategy to use', default='blackjack', choices=STRATEGY_MAP.keys())
     parser.add_argument('-t', '--turns', help='Max number of turns to play per game', type=int, default=1000)
     args = parser.parse_args()
 
@@ -48,7 +48,7 @@ if __name__ == '__main__':
     # Multiprocess game execution and collect MetricTrackers from each simulated game (with a progress bar!)
     print('Running Game Simulations...\n')
     with mp.Pool(args.concurrency) as pool:
-        results = list(tqdm(pool.imap(worker, (setup_game(configuration) for _ in range(args.games))), total=args.games))
+        results = list(pool.map(worker, (setup_game(configuration) for _ in range(args.games))), total=args.games)
 
     # Analyze the results of the games
     print(header('ANALYTICS'))

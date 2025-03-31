@@ -1,11 +1,10 @@
 from blackjack.controllers.display_utils import money_format
-from blackjack.models.hand import Hand
-from blackjack.values import HandStatus
-from blackjack.values.CardRanks import CardRank
+from blackjack.models.Hand import Hand
+from blackjack.values.HandStatus import HandStatus
 
 class GamblerHand(Hand):
 
-    def __init__(self, cards=None, status=HandStatus.Waiting, wager=0, insurance=0, hand_number=0):
+    def __init__(self, cards=None, status=HandStatus.Pending, wager=0, insurance=0, hand_number=0):
         super().__init__(cards, status)
         # Attributes
         self.wager = wager

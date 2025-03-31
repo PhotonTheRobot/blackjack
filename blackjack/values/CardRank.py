@@ -1,6 +1,4 @@
-from enum import Enum
-
-class CardRank(Enum):
+class CardRank():
     Two = 2
     Three = 3
     Four = 4

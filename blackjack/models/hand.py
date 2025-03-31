@@ -1,11 +1,11 @@
 from blackjack.controllers.display_utils import money_format
-from blackjack.values import HandStatus
-from blackjack.values.CardRanks import CardRank
+from blackjack.values.HandStatus import HandStatus
+from blackjack.values.CardRank import CardRank
 
 
 class Hand:
 
-    def __init__(self, cards=None, status=HandStatus.Waiting):
+    def __init__(self, cards=None, status=HandStatus.Pending):
         self.cards = cards or []  # Card order matters for consistent display
         self.status = status
 
@@ -21,7 +21,7 @@ class Hand:
     def PossibleTotals(self):
         """Sum the cards in the hand. Return 2 totals, due to the dual value of Aces."""
         # Get the number of aces in the hand
-        num_aces = self.get_num_aces_in_hand()
+        num_aces = self._GetTotalAces()
 
         # Get the total for all non-ace cards first, as this is constant
         non_ace_total = sum(card.value for card in self.cards if card.name != 'Ace')
@@ -44,11 +44,11 @@ class Hand:
         else:
             return low_total, high_total
 
-    def GetTotalAces(self):
+    def _GetTotalAces(self):
         """Get the number of Aces in the hand."""
         return sum(1 for card in self.cards if card.rank == CardRank.Ace)
 
-    def format_possible_totals(self):
+    def _FormatPossibleTotals(self):
         """Get human readable string representing the hand total(s) to display."""
         # Get possible hand total(s) to display
         low_total, high_total = self.possible_totals()
@@ -66,7 +66,7 @@ class Hand:
         low_total, high_total = self.possible_totals()
         return high_total or low_total
 
-    def get_total_to_display(self):
+    def DisplayTotal(self):
         """Get the hand total to display contingent on hand status."""
         # If hand is still active, allow for multiple totals to be displayed. Otherwise, display the single final total.
         if self.status in (HandStatus.Waiting, HandStatus.Playing):
