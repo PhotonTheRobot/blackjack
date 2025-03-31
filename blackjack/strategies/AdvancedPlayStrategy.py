@@ -2,14 +2,14 @@ import os
 
 from pandas import read_csv
 
-from blackjack.strategies.base_strategy import BaseStrategy
+from blackjack.strategies.BaseStrategy import BaseStrategy
 from blackjack.values.PlayerActions import PlayerActions
 
 
 DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 
 
-class BaseStaticStrategy(BaseStrategy):
+class AdvancedPlayStrategy(BaseStrategy):
     _hitString = 'Hit'
     _standString = 'Stand'
     _doubleString = 'Double'
@@ -25,6 +25,7 @@ class BaseStaticStrategy(BaseStrategy):
         self.split_df = self._load_df(strategy_name, 'split')
         self.soft_df = self._load_df(strategy_name, 'soft')
         self.hard_df = self._load_df(strategy_name, 'hard')
+        self.sideBet = self._load_df(strategy_name, 'lucky777')
 
     @staticmethod
     def _load_df(strategy_name, csv_type):

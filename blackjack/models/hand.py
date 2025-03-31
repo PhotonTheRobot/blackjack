@@ -1,4 +1,4 @@
-from blackjack.display_utils import money_format
+from blackjack.controllers.display_utils import money_format
 from blackjack.values import HandStatus
 from blackjack.values.CardRanks import CardRank
 

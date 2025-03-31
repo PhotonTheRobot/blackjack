@@ -1,5 +1,5 @@
 
-from blackjack.controllers.game_controller import GameController
+from blackjack.game_controller import GameController
 from blackjack.models.dealer import Dealer
 from blackjack.models.gambler import Gambler
 from blackjack.models.shoe import Shoe

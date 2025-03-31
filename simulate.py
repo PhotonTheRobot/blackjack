@@ -6,15 +6,12 @@ from argparse import ArgumentParser
 from tqdm import tqdm
 
 from blackjack.analytics.multi_game_analyzer import MultiGameAnalyzer
-from blackjack.configuration import get_simulation_configuration
-from blackjack.display_utils import clear, header
-from blackjack.game_setup import setup_game
-from blackjack.strategies.default_static_strategy import DefaultStaticStrategy
-from blackjack.strategies.insurance_static_strategy import InsuranceStaticStrategy
-
+from blackjack.controllers.configuration import get_simulation_configuration
+from blackjack.controllers.display_utils import clear, header
+from blackjack.controllers.game_setup import setup_game
 
 STRATEGY_MAP = {
-    'default': DefaultStaticStrategy,
+    'blackjack': DefaultStaticStrategy,
     'insurance': InsuranceStaticStrategy
 }
 

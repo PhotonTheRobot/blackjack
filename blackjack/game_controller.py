@@ -2,9 +2,9 @@ from collections import OrderedDict
 from time import sleep
 
 from blackjack.analytics.metric_tracker import MetricTracker
-from blackjack.exc import InsufficientBankrollError
-from blackjack.models.hand import DealerHand, GamblerHand
-from blackjack.display_utils import clear, header, money_format, pct_format
+from blackjack.models.exceptions.Exception import InsufficientBankrollError
+from blackjack.models.Hand import DealerHand, GamblerHand
+from blackjack.controllers.display_utils import clear, header, money_format, pct_format
 
 
 def render_after(instance_method):

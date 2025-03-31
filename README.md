@@ -1,14 +1,10 @@
 # blackjack
 A blackjack game simulator written in pure Python.
 
-<br>
-
-<p align="center">
-  <img src="./table.jpg" width="400">
-</p>
-
-
 ## Installation
+
+pip install -r requirements.txt
+
 
 Clone the repository.
 

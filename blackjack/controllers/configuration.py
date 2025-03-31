@@ -1,4 +1,3 @@
-from blackjack.strategies.user_input_strategy import UserInputStrategy
 
 def get_simulation_configuration(bankroll, auto_wager, number_of_decks, penetration, strategy, max_turns):
     """Get game configuration data for the simulation game mode."""

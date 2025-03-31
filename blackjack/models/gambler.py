@@ -1,5 +1,5 @@
-from blackjack.exc import InsufficientBankrollError, OverdraftError
-from blackjack.display_utils import money_format
+from blackjack.models.exceptions.Exception import InsufficientBankrollError, OverdraftError
+from blackjack.controllers.display_utils import money_format
 
 
 class Gambler:
