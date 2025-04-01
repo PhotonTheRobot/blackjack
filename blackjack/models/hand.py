@@ -1,16 +1,25 @@
 from blackjack.controllers.display_utils import money_format
+from blackjack.models.exceptions.InsufficientBankrollException import InsufficientBankrollException
 from blackjack.values.HandStatus import HandStatus
 from blackjack.values.CardRank import CardRank
 
 
 class Hand:
+    _cards = []
+    _status = HandStatus.Pending
+    
+    @property
+    def Wager(self):
+        """Get the wager on the hand."""
+        return self._wager
 
-    def __init__(self, cards=None, status=HandStatus.Pending):
-        self.cards = cards or []  # Card order matters for consistent display
-        self.status = status
+    #Constructor
+    def __init__(self, cards=[], status=HandStatus.Pending):
+        self._cards = cards
+        self._status = status
 
         if self.IsBlackjack():
-            self.status = HandStatus.Blackjack
+            self._status = HandStatus.Blackjack
 
     def __str__(self):
         return ' | '.join(str(card) for card in self.cards)
@@ -69,7 +78,7 @@ class Hand:
     def DisplayTotal(self):
         """Get the hand total to display contingent on hand status."""
         # If hand is still active, allow for multiple totals to be displayed. Otherwise, display the single final total.
-        if self.status in (HandStatus.Waiting, HandStatus.Playing):
+        if self._status in (HandStatus.Waiting, HandStatus.Playing):
             return self.format_possible_totals()
         else:
             return str(self.final_total())
@@ -90,3 +99,13 @@ class Hand:
         """Check whether a hand is 'soft', meaning has an Ace counted as 11."""
         _, high_total = self.possible_totals()
         return bool(high_total)
+    
+    def SetWager(self, wager=0):
+        """Set the wager on the hand."""
+        if wager == 0:
+            wager = self._defaultWager
+            
+        if wager > self._bankroll:
+            raise InsufficientBankrollException('Insufficient bankroll to place wager')
+        
+        self._wager = wager

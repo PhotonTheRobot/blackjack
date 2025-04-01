@@ -7,8 +7,8 @@ class Card:
     _apValue = 0
     _countValue = 0
 
-    def __init__(self, suit, rank, deckId):
-        self._cardId = rank + (deckId * 100) #unique card id, influenced by deck id
+    def __init__(self, cardId, suit, rank):
+        self._cardId = cardId
         self._suit = suit
         self._rank = rank
         

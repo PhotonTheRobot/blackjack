@@ -1,3 +1,4 @@
+from copy import copy, deepcopy
 import math
 import numpy as np
 
@@ -11,7 +12,7 @@ class Shoe:
     _totalCardsDrawn = 0
     _startOfLastHand = 0
     _runningCount = 0
-    _cardIds = [] 
+    _cards = [] 
     _cardLookup = {}
     
     #getters
@@ -27,19 +28,23 @@ class Shoe:
 
     #constructor
     def __init__(self, num_decks, penetration):
-        self.decks = [Deck(i) for i in range(num_decks)]
+        prototypicalDeck = Deck() 
+        self._cardLookup = prototypicalDeck.CardLookup
+
+        self.decks = [copy(prototypicalDeck) for _ in range(num_decks)]
         self._totalCardsInDeck = num_decks * 52
         self.startOfLastHand = self._totalCardsInDeck - ( penetration * 52 )        
-        self._cards = np.zeros((self._totalCardsInDeck), dtype=int)   
+        self._cards = np.zeros((self._totalCardsInDeck), dtype=int)  
         
-        cardIteration = 0
+        #Add every card from all of the decks into _cards numpy array
+        index = 0
         for deck in self.decks:
-            for card in deck.Cards:                
-                #fill numpy array with the count value of each card
-                self._cardLookup[card.cardId] = card
-                self._cardIds[cardIteration] = card.cardId
-                cardIteration += 1
-        
+            for cardIndex in deck.Cards:
+                card = deck.Cards[cardIndex]
+                #card.Id is the unique identifier for the card
+                self._cards[cardIndex] = card.CardId
+                index += 1
+
         self.ResetShoe()
 
 
@@ -47,7 +52,7 @@ class Shoe:
         self._runningCount = 0
         self._totalCardsDrawn = 0
         self._isLastHand = False
-        np.random.shuffle(self.cards) 
+        np.random.shuffle(self._cards) 
 
 
     def DealCard(self):
