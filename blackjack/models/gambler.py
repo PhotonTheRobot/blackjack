@@ -3,7 +3,7 @@ from blackjack.Models.Participant import Participant
 from blackjack.Models.Exceptions.InsufficientBankrollException import InsufficientBankrollException
 from blackjack.Models.Exceptions.OverdraftException import OverdraftException
 
-
+#Gambler class
 class Gambler(Participant):
     _bankroll = 0
     _isRuined = False

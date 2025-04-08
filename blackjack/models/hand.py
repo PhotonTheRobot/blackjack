@@ -4,7 +4,7 @@ from blackjack.Models.Exceptions.InsufficientBankrollException import Insufficie
 from blackjack.values.CardRank import CardRank
 from blackjack.values.HandStatus import HandStatus
 
-
+#Hand class
 class Hand:
     _cards = []
     _status = HandStatus.Pending

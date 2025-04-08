@@ -1,6 +1,7 @@
 from blackjack.Models.Hand import Hand
 from blackjack.values.HandStatus import HandStatus
 
+#GamblerHand class
 class GamblerHand(Hand):
     _wager = 0
     _insurance = 0

@@ -4,6 +4,7 @@ import numpy as np
 
 from blackjack.Models.Deck import Deck
 
+#Shoe class
 class Shoe:
     #private vars
     _isLastHand = False

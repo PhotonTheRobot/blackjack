@@ -4,8 +4,8 @@ import numpy as np
 from blackjack.values.CardRank import CardRank
 from blackjack.values.CardSuit import CardSuit
 
+#Deck class
 class Deck:
-
     _allSuits = [CardSuit.Hearts, CardSuit.Diamonds, CardSuit.Clubs, CardSuit.Spades]
     _allRanks = [CardRank.Ace, CardRank.Two, CardRank.Three, CardRank.Four, CardRank.Five,
                  CardRank.Six, CardRank.Seven, CardRank.Eight, CardRank.Nine, CardRank.Ten,
@@ -13,6 +13,7 @@ class Deck:
     
     _cards = np.full(52, -1, dtype=int)
     _cardLookup = {}
+    
     
     @property
     def Cards(self):

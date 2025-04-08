@@ -2,7 +2,7 @@ from blackjack.Models.Hand import Hand
 from blackjack.Models.Exceptions.InsufficientBankrollException import InsufficientBankrollException
 from blackjack.Models.Exceptions.OverdraftException import OverdraftException
 
-
+#Participant class
 class Participant:
     """Base class for all participants in the game."""
     _hands = []

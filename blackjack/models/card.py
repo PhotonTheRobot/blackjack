@@ -1,4 +1,4 @@
-
+ 
 class Card:
     #private vars
     _cardId = None
@@ -10,7 +10,9 @@ class Card:
     def __init__(self, cardId, suit, rank):
         self._cardId = cardId
         self._suit = suit
-        self._rank = rank
+        self._rank = rank 
+        
+        
         
         if rank <= 6:
             self._apValue = 1

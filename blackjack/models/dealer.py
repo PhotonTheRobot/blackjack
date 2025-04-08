@@ -9,6 +9,7 @@ class Dealer(Participant):
     def Hand(self):
         return self._hands[0] if self._hands else []
     
+    
     def __init__(self, hands=[]):
         super().__init__(hands)    
 
