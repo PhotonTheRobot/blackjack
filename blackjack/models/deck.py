@@ -1,4 +1,4 @@
-from blackjack.models.Card import Card
+from blackjack.Models.Card import Card
 import uuid
 import numpy as np
 from blackjack.values.CardRank import CardRank
@@ -11,8 +11,8 @@ class Deck:
                  CardRank.Six, CardRank.Seven, CardRank.Eight, CardRank.Nine, CardRank.Ten,
                  CardRank.Jack, CardRank.Queen, CardRank.King]
     
-    _cards = {}
-    _cardLookup = np.zeros((4, 13), dtype=int)
+    _cards = np.full(52, -1, dtype=int)
+    _cardLookup = {}
     
     @property
     def Cards(self):
@@ -35,6 +35,6 @@ class Deck:
         for suit in self._allSuits:
             for rank in self._allRanks:
                 # Starting at Rank-2 because the lowest card value is 2
-                self._cards[cardId] = Card(cardId, suit, rank)
-                self._cardLookup[suit-1][rank-2] = cardId
+                self._cardLookup[cardId] = Card(cardId, suit, rank)
+                self._cards[cardId - 1] = cardId
                 cardId += 1

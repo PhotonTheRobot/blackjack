@@ -1,10 +1,9 @@
-from blackjack.models.Participant import Participant
+from blackjack.Models.Participant import Participant
 from blackjack.values.CardRank import CardRank
 
 
 class Dealer(Participant):
     _name = 'Dealer'
-    _dealerHand = None
 
     def __init__(self, hands=[]):
         super().__init__(hands)    

@@ -1,31 +1,35 @@
-from blackjack.models.Hand import Hand
-from blackjack.models.Participant import Participant
-from blackjack.models.exceptions.InsufficientBankrollException import InsufficientBankrollException
-from blackjack.models.exceptions.OverdraftException import OverdraftException
+from blackjack.Models.Hand import Hand
+from blackjack.Models.Participant import Participant
+from blackjack.Models.Exceptions.InsufficientBankrollException import InsufficientBankrollException
+from blackjack.Models.Exceptions.OverdraftException import OverdraftException
 
 
 class Gambler(Participant):
     _bankroll = 0
     _isRuined = False
-    _defaultWager = 0
-    _autoWager = 0
+    _minBet = 0
+    _currentTrueCountWager = 0
+    
+    @property
+    def Bankroll(self):
+        """Get the bankroll."""
+        return self._bankroll
+    
 
-    def __init__(self, bankroll=0, hands=[]):
+    def __init__(self, gamblerConfig, minBet, hands=[]):
         Participant.__init__(self, hands)
-        self._bankroll = bankroll
-        
+        self._bankroll = gamblerConfig['bankroll']
+        self._trueCountChipMultiplier = gamblerConfig['trueCountChipMultiplier']
+        self._minBet = minBet
+        self._currentTrueCountWager = minBet
+
         
     def CanPlaceWager(self, wager=0):
         if wager == 0:
-            wager = self._defaultWager
+            wager = self._minBet
             
         """Check if a wager can be placed."""
         return wager <= self._bankroll
-
-
-    def GetBankroll(self):
-        """Add an amount to the bankroll."""
-        return self._bankroll
         
 
     def AddToBankroll(self, amount):
@@ -39,31 +43,34 @@ class Gambler(Participant):
         else:
             raise InsufficientBankrollException('Insufficient bankroll to place wager')
 
-    def SetAutoWager(self, wager = 0):
-        """Get the wager based off of shoe's running count"""
-        if wager == 0:
-            wager = self._defaultWager
-        
-        self._wager = wager
 
-    def PlaceWager(self, handNumber):
+    def PlaceWager(self, handNumber = 0, trueCount = 0):
         """Place a wager on a hand. Additive so can be used to double down."""
-        self._subtract_bankroll(self._autoWager)  
+        #assume the wager is the minimum bet unless otherwise specified
+        self._currentTrueCountWager = self._minBet
+        
+        #if the true count is greater than 0, then the wager is the true count times the true count chip multiplier
+        if trueCount > 0:
+            self._currentTrueCountWager = trueCount * self._trueCountChipMultiplier
+        
+        self._bankroll -= self._currentTrueCountWager
         if self._bankroll <= 0:
             raise OverdraftException('The player\'s bankroll has been ruined')
         
-        self._hands[handNumber].Wager = self._autoWager
+        if len(self._hands) > 0:
+            self._hands[handNumber].Wager = self._currentTrueCountWager
         
 
-    def BuyInsurance(self, handNumber):
+    def CheckAndBuyInsurance(self, handNumber, trueCount = 0):
         hand = self._hands[handNumber]
         insuranceAmount = hand.wager / 2
         
-        if self.CanPlaceWager(insuranceAmount):
-            self.RemoveFromBankroll(insuranceAmount)
-            hand.insurance = insuranceAmount
-        else:
-            raise InsufficientBankrollException('Insufficient bankroll to place insurance bet')
+        if trueCount > 0:        
+            if self.CanPlaceWager(insuranceAmount):
+                self.RemoveFromBankroll(insuranceAmount)
+                hand.Insurance = insuranceAmount
+            else:
+                raise InsufficientBankrollException('Insufficient bankroll to place insurance bet')
 
 
     def SettleUp(self, dealer_hand):

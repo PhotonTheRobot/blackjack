@@ -1,5 +1,4 @@
-from blackjack.controllers.display_utils import money_format
-from blackjack.models.Hand import Hand
+from blackjack.Models.Hand import Hand
 from blackjack.values.HandStatus import HandStatus
 
 class GamblerHand(Hand):

@@ -42,13 +42,13 @@ class MetricTracker:
             self._increment_metric('gambler blackjacks')
 
         # Outcomes
-        if hand.outcome in ('Win', 'Even Money'):
+        if hand.outcome in (HandOutcome.Win, 'Even Money'):
             self._increment_metric('wins')
-        elif hand.outcome == 'Loss':
+        elif hand.outcome == HandOutcome.Loss:
             self._increment_metric('losses')
-        elif hand.outcome == 'Push':
+        elif hand.outcome == HandOutcome.Push:
             self._increment_metric('pushes')
-        elif hand.outcome == 'Insurance Win':
+        elif hand.outcome == HandOutcome.InsuranceWin:
             self._increment_metric('insurance wins')
         else:
             raise ValueError(f"Unsupported hand outcome: {hand.outcome}")

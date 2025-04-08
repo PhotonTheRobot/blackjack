@@ -1,37 +1,10 @@
-import os
-
-from pandas import read_csv
-
-from blackjack.strategies.BasePrimaryStrategy import BasePrimaryStrategy
 from blackjack.values.PlayerAction import PlayerActions
+from blackjack.values.Constants import Constants  # Import Constants
 
-
-DIRECTORY = os.path.dirname(os.path.realpath(__file__))
-
-
-class AdvancedPlayStrategy(BasePrimaryStrategy):
-    _hitString = 'Hit'
-    _standString = 'Stand'
-    _doubleString = 'Double'
-    _splitString = 'Split'
-    
-    """
-    Base predetermined Strategy from which other static Strategies can be derrived.
-    Note that concrete static Strategies must implement the required BaseStrategy methods omitted here.
-    """
-
-    def __init__(self, strategy_name):
+class AdvancedPlayStrategy():
+    #Empty init method to satisfy the abstract base class requirement.
+    def __init__(self):
         super().__init__()
-        self.split_df = self._load_df(strategy_name, 'split')
-        self.soft_df = self._load_df(strategy_name, 'soft')
-        self.hard_df = self._load_df(strategy_name, 'hard')
-        #self.sideBet = self._load_df(strategy_name, 'lucky777')
-
-    @staticmethod
-    def _load_df(strategy_name, csv_type):
-        """Load a DataFrame from a CSV for determining actions."""
-        csv_path = f"{DIRECTORY}/csv/{strategy_name}/{csv_type}.csv"
-        return read_csv(csv_path, index_col=0)
 
     def GetHandAction(self, hand, options, dealer_upcard):
         """Get the action to take on the hand ('Hit', 'Stand', etc.)"""
@@ -41,7 +14,7 @@ class AdvancedPlayStrategy(BasePrimaryStrategy):
         # If splitting is an option, check if that action should be taken first.
         if PlayerActions.Split in options.values():
             row = hand.cards[0].csv_format()
-            if self.split_df.at[row, column] == self._splitString:
+            if self.split_df.at[row, column] == Constants.SPLIT_STRING:  # Use Constants.SPLIT_STRING
                 return PlayerActions.Split
 
         # Use the appropriate 'soft' or 'hard' hand DataFrame to decide which action should be taken.

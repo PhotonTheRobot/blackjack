@@ -2,17 +2,20 @@ from copy import copy, deepcopy
 import math
 import numpy as np
 
-from blackjack.models.Deck import Deck
+from blackjack.Models.Deck import Deck
 
 class Shoe:
     #private vars
     _isLastHand = False
     _decks = []
-    _totalCardsInDeck = 0
+    _totalCardsInShoe = 0
     _totalCardsDrawn = 0
     _startOfLastHand = 0
     _runningCount = 0
-    _cards = [] 
+    
+    #An array of cards in the shoe. This is a numpy array of integers that represent the card Ids.
+    _cards = np.array([], dtype=int) 
+    #A hashtable of cards in the shoe. This is a dictionary that maps the card Id to the card object.
     _cardLookup = {}
     
     #getters
@@ -20,30 +23,54 @@ class Shoe:
     def IsLastHand(self):
         return self._isLastHand
     
+    @property
+    def RunningCount(self):
+        return self._runningCount
+    
+    @property
+    def TrueCount(self):
+        if self.DecksRemaining > 0:
+            trueCountFraction = self.RunningCount / self.DecksRemaining
+            return math.floor(trueCountFraction)
+        else:
+            return 0
     
     @property
     def DecksRemaining(self):
-        return math.roof((self._totalCardsInDeck - self._totalCardsDrawn) / 52)    
-
+        return math.ceil((self._totalCardsInShoe - self._totalCardsDrawn) / 52)    
 
     #constructor
-    def __init__(self, num_decks, penetration):
+    def __init__(self, tableConfig):
+        """
+        Initialize the Shoe with a number of decks and penetration level.
+        The penetration level determines how many cards are left in the shoe before it is reshuffled.
+        """
+        numDecks = tableConfig['numberOfDecks']
+        penetration = tableConfig['penetration']
+        
         prototypicalDeck = Deck() 
         self._cardLookup = prototypicalDeck.CardLookup
 
-        self.decks = [copy(prototypicalDeck) for _ in range(num_decks)]
-        self._totalCardsInDeck = num_decks * 52
-        self.startOfLastHand = self._totalCardsInDeck - ( penetration * 52 )        
-        self._cards = np.zeros((self._totalCardsInDeck), dtype=int)  
+        self.decks = [copy(prototypicalDeck) for _ in range(numDecks)]
+        self._totalCardsInShoe = numDecks * 52
+        self.startOfLastHand = self._totalCardsInShoe - ( penetration * 52 )        
+        self._cards = np.full(self._totalCardsInShoe, -1, dtype=int)
         
-        #Add every card from all of the decks into _cards numpy array
-        index = 0
+        deckIndex = 0
+        #Add every card from all of the decks into _cards numpy arra
         for deck in self.decks:
-            for cardIndex in deck.Cards:
-                card = deck.Cards[cardIndex]
-                #card.Id is the unique identifier for the card
-                self._cards[cardIndex] = card.CardId
-                index += 1
+            cardIndex = 0
+
+            deckAdjustment = deckIndex * 52
+            
+            for npCard in deck.Cards:
+                cardId = npCard.item()
+
+                #fill the private variable
+                self._cards[cardIndex + deckAdjustment] = cardId
+                cardIndex += 1
+                
+            deckIndex += 1
 
         self.ResetShoe()
 
@@ -61,12 +88,22 @@ class Shoe:
             self._isLastHand = True
         
         #pull a card from the front of the shoe
-        cardId = self.cards[self._totalCardsDrawn]
+        cardId = self._cards[self._totalCardsDrawn]
 
         #return the card object from a hashtable lookup
-        drawnCard = self.cardLookup[cardId]
+        drawnCard = self._cardLookup[cardId]
         self._runningCount += drawnCard.AdvantagedPlayerValue
         self._totalCardsDrawn += 1
 
-        return drawnCard        
-
+        return drawnCard  
+    
+    def DealMultipleCards(self, numCards):
+        """
+        Deal multiple cards from the shoe.
+        :param numCards: The number of cards to deal.
+        :return: A list of dealt cards.
+        """
+        cards = []
+        for _ in range(numCards):
+            cards.append(self.DealCard())
+        return cards          

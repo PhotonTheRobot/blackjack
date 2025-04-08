@@ -3,16 +3,18 @@
 import asyncio
 from argparse import ArgumentParser
 
+from AppConfig import GetAppConfig
+from blackjack.Utilities.DisplayUtilities import clear, header
+from blackjack.Utilities.GameSetupUtility import setup_game
 from blackjack.analytics.multi_game_analyzer import MultiGameAnalyzer
-from blackjack.controllers.configuration import get_simulation_configuration
-from blackjack.controllers.display_utils import clear, header
-from blackjack.controllers.game_setup import setup_game
 from blackjack.strategies import AdvancedPlayStrategy
+from blackjack.strategies.BetSpreadStrategy import BetSpreadStrategy
 from blackjack.strategies.SideBetStrategy import SideBetStrategy
 
 STRATEGY_MAP = {
     'blackjack': AdvancedPlayStrategy,
-    'sidebet': SideBetStrategy
+    'sidebet': SideBetStrategy,
+    'betspread': BetSpreadStrategy,
 }
 
 
@@ -29,17 +31,15 @@ async def main():
     parser.add_argument('-d', '--decks', help='Number of decks to play with', type=int, default=6)
     parser.add_argument('-p', '--penetration', help='Number of decks worth of penetration', type=float, default=1.0)
     parser.add_argument('-g', '--games', help='Number of games to simulate', type=int, default=1)
-    parser.add_argument('-s', '--strategy', help='Name of the gameplay strategy to use', default='blackjack', choices=STRATEGY_MAP.keys())
     parser.add_argument('-t', '--turns', help='Max number of turns to play per game', type=int, default=1000)
     args = parser.parse_args()
 
     # Clear the terminal screen.
     clear()    
     # Get the requested gameplay strategy
-    strategy = STRATEGY_MAP[args.strategy]
-
+    
     # Load the game configuration (in this case, the 'simulation' configuration).
-    configuration = get_simulation_configuration(args.bankroll, args.auto_wager, args.decks, args.penetration, strategy, args.turns)
+    configuration = GetAppConfig()
 
     asyncGames =  []
     # Multiprocess game execution and collect MetricTrackers from each simulated game (with a progress bar!)
