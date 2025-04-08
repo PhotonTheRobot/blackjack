@@ -1,26 +1,26 @@
 from blackjack.Models.Hand import Hand
+from blackjack.values.CardRank import CardRank
+from blackjack.values.HandStatus import HandStatus
 
 class DealerHand(Hand):
-
+    @property
     def UpCard(self):
-        return self.cards[0]
+        return self.Cards[0]
 
-    # def pretty_format(self, hide=True):
-    #     """Get a string representation of the hand formatted to be printed."""
-    #     if hide:
-    #         up_card = self.up_card()
-    #         cards = f"Upcard: {up_card}"
-    #         total = f"Total: {up_card.value if up_card.name != 'Ace' else '1 or 11'}"
-    #         status = 'Status: Pending'
-    #     else:
-    #         cards = f"Cards: {self}"
-    #         total = f"Total: {self.get_total_to_display()}"
-    #         status = f"Status: {self.status}"
+    def __init__(self, cards=[], status=None):
+        super().__init__(cards, status)
+        self._status = status if status else HandStatus.Pending
 
-    #     lines = [
-    #         'Hand:',
-    #         cards,
-    #         total,
-    #         status
-    #     ]
-    #     return '\n\t'.join(lines)
+
+    def IsShowingAce(self):
+        """Check whether the dealer is showing an ace."""
+        return self.UpCard == CardRank.Ace
+
+    def IsShowingFaceCard(self):
+        """Check whether the dealer is showing a face card."""
+        upCard = self.UpCard
+        return upCard == CardRank.King or upCard == CardRank.Queen or upCard == CardRank.Jack or upCard == CardRank.Ten
+    
+    def DiscardHand(self):
+        """Reset the dealer's hand."""
+        self._hand = []

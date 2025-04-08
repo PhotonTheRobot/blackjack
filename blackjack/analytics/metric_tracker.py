@@ -38,7 +38,7 @@ class MetricTracker:
     def process_gambler_hand(self, hand):
         """Track metrics for a played GamblerHand"""
         # Blackjacks
-        if hand.status == 'Blackjack':
+        if hand.Status == 'Blackjack':
             self._increment_metric('gambler blackjacks')
 
         # Outcomes
@@ -59,7 +59,7 @@ class MetricTracker:
 
     def process_dealer_hand(self, hand):
         """Track metrics for a played DealerHand."""
-        if hand.status == 'Blackjack':
+        if hand.Status == 'Blackjack':
             self._increment_metric('dealer blackjacks')
 
     def append_bankroll(self, bankroll):

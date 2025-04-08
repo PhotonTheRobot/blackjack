@@ -51,39 +51,3 @@ class Card:
             return 'A'
         else:
             return str(self._countValue)
-        
-    def PrettyPrint(self, card):
-        """Pretty print the card."""
-        cardString = ""
-        
-        match(card.Value):
-            case (1, 11):
-                cardString += "Ace"
-            case 10:
-                cardString += "Ten"
-            case 11:
-                cardString += "Jack"
-            case 12:
-                cardString += "Queen"
-            case 13:
-                cardString += "King"
-            case _:
-                cardString += card.Rank
-        
-        match(card.Suit):
-            case 0:
-                cardString += " of Hearts"
-            case 1:
-                cardString += " of Diamonds"
-            case 2:
-                cardString += " of Clubs"
-            case 3:
-                cardString += " of Spades"
-        
-        
-        
-        if card.Value < 10:
-            cardString += str(card.Value)
-        
-            return str(self._countValue)
-        return f"{self._rank} of {self._suit}"

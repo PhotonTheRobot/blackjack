@@ -30,13 +30,14 @@ class GamblerHand(Hand):
     #         f"Hand {self.hand_number}:",
     #         f"Cards: {self}",
     #         f"Total: {self.get_total_to_display()}",
-    #         f"Wager: {money_format(self.wager)}",
-    #         f"Status: {self.status}",
+    #         f"Wager: {LoggingController.GetMoneyFormat(self.wager)}",
+    #         f"Status: {self.Status}",
     #         f"Outcome: {self.outcome}{extra_outcome}",
-    #         f"Net: {money_format(self.earnings - self.wager - self.insurance)}"
+    #         f"Net: {LoggingController.GetMoneyFormat(self.earnings - self.wager - self.insurance)}"
     #     ]
         
     #     return '\n\t'.join(lines)
+
 
     def IsSplittable(self):
         """
@@ -45,7 +46,7 @@ class GamblerHand(Hand):
         1) Hand is made up of two cards.
         2) The value of the two cards matches (e.g. King-King, Five-Five, etc.)
         """
-        return len(self.cards) == 2 and self.cards[0].Rank == self.cards[1].Rank
+        return len(self.Cards) == 2 and self.Cards[0].Rank == self.Cards[1].Rank
 
 
     def IsDoubleable(self):
@@ -54,10 +55,5 @@ class GamblerHand(Hand):
         Requirements:
         1) Hand is made up of two cards.
         """
-        return len(self.cards) == 2
-    
-    
-    def SetWager(self, wager):
-        """Set the wager on the hand."""
-        self._wager = wager
+        return len(self.Cards) == 2
     

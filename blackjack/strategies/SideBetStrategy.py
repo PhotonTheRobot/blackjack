@@ -35,7 +35,7 @@ class SideBetStrategy():
 
         # If splitting is an option, check if that action should be taken first.
         if PlayerActions.Split in options.values():
-            row = hand.cards[0].csv_format()
+            row = hand.Cards[0].csv_format()
             if self.split_df.at[row, column] == self._splitString:
                 return PlayerActions.Split
 

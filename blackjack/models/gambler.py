@@ -58,12 +58,12 @@ class Gambler(Participant):
             raise OverdraftException('The player\'s bankroll has been ruined')
         
         if len(self._hands) > 0:
-            self._hands[handNumber].Wager = self._currentTrueCountWager
+            self.Hands[handNumber].SetWager( self._currentTrueCountWager )
         
 
     def CheckAndBuyInsurance(self, handNumber, trueCount = 0):
         hand = self._hands[handNumber]
-        insuranceAmount = hand.wager / 2
+        insuranceAmount = hand.Wager / 2
         
         if trueCount > 0:        
             if self.CanPlaceWager(insuranceAmount):
@@ -82,7 +82,7 @@ class Gambler(Participant):
     def DoubleDown(self, handNumber):
         """Double down on a hand."""
         hand = self._hands[handNumber]
-        wager = hand.wager
+        wager = hand.Wager
         self.PlaceWager(wager, handNumber)
         hand.double_down = True
     
@@ -90,8 +90,9 @@ class Gambler(Participant):
     def SplitHand(self, handNumber):
         """Split a hand."""
         hand = self._hands[handNumber]
-        wager = hand.wager
+        wager = hand.Wager
         self.PlaceWager(wager, handNumber)
-        new_hand = Hand([hand.cards.pop()])
-        new_hand.wager = wager
+        
+        new_hand = Hand([hand.Cards.pop()])
+        new_hand.SetWager(wager)
         self._hands.append(new_hand)

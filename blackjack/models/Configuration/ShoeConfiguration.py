@@ -1,12 +1,3 @@
-#define class for the shoe configuration that matches the json in DefaultConfiguration.py
-
-from blackjack.Models.Configuration.GameConfiguration import GameConfiguration  
-
-_numberOfDecks = 6
-_penetration = 1
-_minBet = 15
-_maxBet = 1000
-_trueCountChipValue = 25
 
 class ShoeConfiguration():
 

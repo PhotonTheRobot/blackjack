@@ -1,7 +1,3 @@
-#Create class GameplayConfiguration based on the gameplay property in the json in DefaultConfiguration.py 
-
-from blackjack.Models.Configuration.GameConfiguration import GameConfiguration
-
 class GameplayConfiguration:
     """
     Class to represent the configuration of gameplay in a blackjack game.

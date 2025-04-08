@@ -15,6 +15,20 @@ class Hand:
     def Wager(self):
         """Get the wager on the hand."""
         return self._wager
+    
+    @property
+    def Cards(self):
+        """Get the cards in the hand."""
+        return self._cards
+    
+    @property
+    def Status(self):
+        """Get the status of the hand."""
+        return self._status
+    @Status.setter
+    def Status(self, status):
+        """Set the status of the hand."""
+        self._status = status
 
     #Constructor
     def __init__(self, cards=[], status=HandStatus.Pending):
@@ -74,7 +88,7 @@ class Hand:
         else:
             return f"{low_total}"
 
-    def _CurrentTotal(self):
+    def CurrentTotal(self):
         """Get the singular hand total for determining the outcome (high total if it exists, otherwise low total)."""
         low_total, high_total = self._PossibleTotals()
         return high_total or low_total
@@ -85,11 +99,11 @@ class Hand:
         if self._status in (HandStatus.Waiting, HandStatus.Playing):
             return self.format__PossibleTotals()
         else:
-            return str(self._CurrentTotal())
+            return str(self.CurrentTotal())
 
     def Is21(self):
         """Check if the hand totals to 21."""
-        return self._CurrentTotal() == 21
+        return self.CurrentTotal() == 21
 
     def IsBlackjack(self):
         """Check whether the hand is Blackjack."""
@@ -97,7 +111,7 @@ class Hand:
 
     def IsBusted(self):
         """Check whether the hand is busted."""
-        return self._CurrentTotal() > 21
+        return self.CurrentTotal() > 21
 
     def IsSoft(self):
         """Check whether a hand is 'soft', meaning has an Ace counted as 11."""
@@ -108,8 +122,4 @@ class Hand:
         """Set the wager on the hand."""
         if wager == 0:
             wager = self._defaultWager
-            
-        if wager > self._bankroll:
-            raise InsufficientBankrollException('Insufficient bankroll to place wager')
-        
         self._wager = wager

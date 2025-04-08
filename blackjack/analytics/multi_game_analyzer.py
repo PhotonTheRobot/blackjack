@@ -102,11 +102,11 @@ class MultiGameAnalyzer:
 
             --- Bankroll ---
             
-            Avg Winnings: {money_format(winnings_gross_avg)} ({pct_format(winnings_pct_avg)})
+            Avg Winnings: {LoggingController.GetMoneyFormat(winnings_gross_avg)} ({pct_format(winnings_pct_avg)})
 
-            Max Bankroll: {money_format(max(self.final_bankrolls))}
-            Min Bankroll: {money_format(min(self.final_bankrolls))}
-            Avg Bankroll: {money_format(mean(self.final_bankrolls))}
+            Max Bankroll: {LoggingController.GetMoneyFormat(max(self.final_bankrolls))}
+            Min Bankroll: {LoggingController.GetMoneyFormat(min(self.final_bankrolls))}
+            Avg Bankroll: {LoggingController.GetMoneyFormat(mean(self.final_bankrolls))}
             """)
         )
 

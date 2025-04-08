@@ -1,8 +1,9 @@
 
 from blackjack.Controllers.GameController import GameController
-from blackjack.Models.Dealer import Dealer
 from blackjack.Models.Gambler import Gambler
+from blackjack.Models.Dealer import Dealer
 from blackjack.Models.Shoe import Shoe
+from blackjack.Models.Configuration.GameConfiguration import GameConfiguration
 
 def setup_game(config):
     """Set up the GameController class that runs the game from a configuration dictionary."""

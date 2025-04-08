@@ -14,9 +14,9 @@ class Shoe:
     _runningCount = 0
     
     #An array of cards in the shoe. This is a numpy array of integers that represent the card Ids.
-    _cards = np.array([], dtype=int) 
+    _cardIds = np.array([], dtype=int) 
     #A hashtable of cards in the shoe. This is a dictionary that maps the card Id to the card object.
-    _cardLookup = {}
+    _cardDictionary = {}
     
     #getters
     @property
@@ -54,20 +54,19 @@ class Shoe:
         self.decks = [copy(prototypicalDeck) for _ in range(numDecks)]
         self._totalCardsInShoe = numDecks * 52
         self.startOfLastHand = self._totalCardsInShoe - ( penetration * 52 )        
-        self._cards = np.full(self._totalCardsInShoe, -1, dtype=int)
+        self._cardIds = np.full(self._totalCardsInShoe, -1, dtype=int)
         
         deckIndex = 0
         #Add every card from all of the decks into _cards numpy arra
         for deck in self.decks:
             cardIndex = 0
-
             deckAdjustment = deckIndex * 52
             
             for npCard in deck.Cards:
                 cardId = npCard.item()
 
                 #fill the private variable
-                self._cards[cardIndex + deckAdjustment] = cardId
+                self._cardIds[cardIndex + deckAdjustment] = cardId
                 cardIndex += 1
                 
             deckIndex += 1
@@ -79,7 +78,7 @@ class Shoe:
         self._runningCount = 0
         self._totalCardsDrawn = 0
         self._isLastHand = False
-        np.random.shuffle(self._cards) 
+        np.random.shuffle(self._cardIds) 
 
 
     def DealCard(self):
@@ -88,7 +87,7 @@ class Shoe:
             self._isLastHand = True
         
         #pull a card from the front of the shoe
-        cardId = self._cards[self._totalCardsDrawn]
+        cardId = self._cardIds[self._totalCardsDrawn]
 
         #return the card object from a hashtable lookup
         drawnCard = self._cardLookup[cardId]
