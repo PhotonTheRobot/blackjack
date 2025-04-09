@@ -2,6 +2,8 @@ from collections import OrderedDict
 import logging
 from time import sleep
 
+import numpy as np
+
 from blackjack.Controllers.LoggingController import LoggingController
 from blackjack.analytics.metric_tracker import MetricTracker
 from blackjack.Models.DealerHand import DealerHand
@@ -13,6 +15,9 @@ from blackjack.strategies.InsuranceStrategy import InsuranceStrategy
 from blackjack.strategies.SideBetStrategy import SideBetStrategy
 from blackjack.values.HandOutcome import HandOutcome
 from blackjack.values.HandStatus import HandStatus
+from blackjack.values.PayoutActionType import PayoutActionType
+from blackjack.values.PayoutType import PayoutType
+from blackjack.values.PlayerAction import PlayerActions
 
 def render_after(instance_method):
     """Decorator for calling the `render()` instance method after calling an instance method."""
@@ -41,6 +46,7 @@ class GameController:
     _gambler = None
     _dealer = None
     _shoe = None
+    _discardTray = None
     _betStrategy = None
     _blackjackStrategy = None
     _insuranceStrategy = None
@@ -54,6 +60,7 @@ class GameController:
         self._logger.info('GameController initialization started...')    
         
         # Configured models from game setup
+        self._discardTray = np.array  # Discard tray for the game
         self._gambler = gambler
         self._dealer = dealer
         self._shoe = shoe
@@ -132,6 +139,8 @@ class GameController:
 
             # Track metrics and reset in order to proceed with the next turn.
             self._FinalizeTurn()
+            
+        cardsToShuffle = self._shoe.DiscardTray.EmptyTray()  # Empty the discard tray and get the cards to shuffle
 
         # Render a game over message
         self.finalize_game()
@@ -166,9 +175,6 @@ class GameController:
         # Set the gambler's auto_wager to $0.00.
         newWager = self._betStrategy.GetBidValue(self._shoe)
         self._gambler.PlaceWager(handNumber, newWager)
-        
-        wagerString = self._loggingController.GetMoneyFormat(newWager)
-        self._logger.debug(f"New wager set to {wagerString}.")
 
 
     def _Deal(self):
@@ -230,7 +236,6 @@ class GameController:
 
                     # The turn is over if the dealer has blackjack. Otherwise, continue on to playing the gamblerHand.
                     if dealerHasBlackjack:
-                        self.hide_dealer = False  # Show the dealer's blackjack.
                         self._SetHandOutcome(gamblerHand, HandOutcome.InsuranceWin)
                     else:
                         gamblerHand.lost_insurance = True
@@ -239,7 +244,6 @@ class GameController:
                 else:
                     # The turn is over if the dealer has blackjack. Otherwise, continue on to playing the gamblerHand.
                     if dealerHasBlackjack:
-                        self.hide_dealer = False
                         self._SetHandOutcome(gamblerHand, HandOutcome.Loss)
 
         # --- DEALER FACE CARD PRE-TURN FLOW --- #
@@ -248,8 +252,6 @@ class GameController:
             # If the dealer has blackjack, it's a push if the player also has blackjack. Otherwise, the player loses.
             if dealerHasBlackjack:
 
-                self.hide_dealer = False
-                
                 if gamblerHasBlackjack:
                     self._SetHandOutcome(gamblerHand, HandOutcome.Push)
                 else:
@@ -302,28 +304,27 @@ class GameController:
 
             # Get the gambler's action (e.g. 'Hit', 'Stand', etc.)
             dealerHand = self._dealer.Hand
-            action = self._blackjackStrategy.GetHandAction(dealerHand, options)
+            action = self._blackjackStrategy.GetHandAction(gamblerHand, options, dealerHand.UpCard)
 
-            if action == 'Hit':
-                self._HitHand(gamblerHand)  # Deal another card and keep playing the gamblerHand.
-
-            elif action == 'Stand':
-                self._SetHandStatus(gamblerHand, 'Stood')  # Do nothing, gamblerHand is played.
-
-            elif action == 'Double':
-                self._DouleHand(gamblerHand)  # Double the wager and deal another card. Hand is played.
-
-            elif action == 'Split':
-                self._SplitHand(gamblerHand)  # Put the second card into a new gamblerHand and keep playing this gamblerHand.
-
-            else:
-                raise Exception('Unhandled response.')  # Should never get here
+            match action:
+                case PlayerActions.Hit:
+                    self._HitHand(gamblerHand)  # Deal another card and keep playing the gamblerHand.
+                case PlayerActions.Stand:
+                    self._SetHandStatus(gamblerHand, HandStatus.Stand)
+                case PlayerActions.Double:
+                    self._DoubleHand(gamblerHand)
+                case PlayerActions.Split:
+                    self._SplitHand(gamblerHand)
+                case PlayerActions.Surrender:
+                    self._SetHandStatus(gamblerHand, HandStatus.Surrendered)
+                case _:
+                    raise Exception('Bad action.')  # Should never get here
 
             # If the gamblerHand is 21 or busted, the gamblerHand is done being played.
-            if gamblerHand.is_21():
-                self._SetHandStatus(gamblerHand, 'Stood')
-            elif gamblerHand.is_busted():
-                self._SetHandStatus(gamblerHand, 'Busted')
+            if gamblerHand.Is21():
+                self._SetHandStatus(gamblerHand, HandStatus.Stand)
+            elif gamblerHand.IsBusted():
+                self._SetHandStatus(gamblerHand, HandStatus.Busted)
                 self._SetHandOutcome(gamblerHand, HandOutcome.Loss)
 
     def _GetHandOptions(self, gamblerHand):
@@ -344,7 +345,7 @@ class GameController:
     @render_after
     def _HitHand(self, gamblerHand):
         """Add a card to a gamblerHand from the shoe."""
-        card = self.shoe.deal_card()  # Deal a card
+        card = self._shoe.DealCard()  # Deal a card
         gamblerHand.Cards.append(card)  # Add the card to the gamblerHand
 
     @render_after
@@ -355,7 +356,7 @@ class GameController:
         self._gambler.PlaceWager(gamblerHand.Wager, new_hand)  # Place the same wager on the new gamblerHand
         self._gambler.Hands.append(new_hand)  # Add the gamblerHand to the gambler's list of hands
 
-    def _DouleHand(self, gamblerHand):
+    def _DoubleHand(self, gamblerHand):
         """Double a gamblerHand, meaning double the wager on it and hit it with one more card."""
         self._gambler.place_hand_wager(gamblerHand.Wager, gamblerHand)  # Double the wager on the gamblerHand
         self._HitHand(gamblerHand)  # Add another card to the gamblerHand from the shoe
@@ -369,198 +370,178 @@ class GameController:
     @render_after
     def _SetHandOutcome(self, gamblerHand, outcome):
         """Set the outcome of the gamblerHand, and change the status if applicable."""
-        gamblerHand.outcome = outcome        
+        gamblerHand.Outcome = outcome        
         if gamblerHand.Status == 'Pending':
             gamblerHand.Status = 'Played'
 
     def _PlayDealerTurn(self):
         """Play the dealer's turn (if necessary)."""
         # Toggle dealer display options
-        self.hide_dealer = False
         self._dealerPlaying = True
 
         # The dealer's turn need only be played if there are gambler hands that are still active
-        if not any(gamblerHand.Status in ('Doubled', 'Stood') for gamblerHand in self._gambler.GetAllHands()):
+        if not any(gamblerHand.Status in (HandStatus.Doubled, 'Stood') for gamblerHand in self._gambler.GetAllHands()):
             self._dealerPlaying = False
             return
 
         self._AddActivity("Playing the Dealer's turn.")
 
         # Grab the dealer's lone gamblerHand to be played
-        gamblerHand = self._dealer.Hand
+        dealerHand = self._dealer.Hand
 
-        # Set the gamblerHand's status to 'Playing', and loop until this status changes.
-        self._SetHandStatus(gamblerHand, 'Playing')
-        
-        while gamblerHand.Status == 'Playing':
+        # Set the dealerHand's status to 'Playing', and loop until this status changes.
+        self._SetHandStatus(dealerHand, HandStatus.Playing)
+        while dealerHand.Status == HandStatus.Playing:
 
-            # Pause for user to follow along if applicable
-            if self.verbose:
-                sleep(1)
-
-            # Get the gamblerHand total.
-            total = gamblerHand.final_total()
+            # Get the dealerHand total.
+            total = dealerHand.FinalTotal()
 
             # Dealer hits under 17 and must hit a soft 17.
-            if total < 17 or (total == 17 and gamblerHand.is_soft()):
-                self._HitHand(gamblerHand)
+            if total < 17 or (total == 17 and dealerHand.IsSoft()):
+                self._HitHand(dealerHand)
             
             # Dealer stands at 17 and above.
             else:
-                self._SetHandStatus(gamblerHand, 'Stood')
+                self._SetHandStatus(dealerHand, HandStatus.Stand)
 
-            # If the gamblerHand is busted dealer is done playing.
-            if gamblerHand.is_busted():
-                self._SetHandStatus(gamblerHand, 'Busted')
+            # If the dealerHand is busted dealer is done playing.
+            if dealerHand.is_busted():
+                self._SetHandStatus(dealerHand, HandStatus.Busted)
 
         # Mark the dealer's turn as finished.
         self._dealerPlaying = False
 
-    def _PayOutHand(self, gamblerHand, payout_type):
-        """Pay out gamblerHand winnings, including wager reclaim."""
-        # Pay out winning gamblerHand wagers 1:1 and reclaim the wager
-        if payout_type == 'wager':
-            self.perform_hand_payout(gamblerHand, 'winning_wager', '1:1')
-            self.perform_hand_payout(gamblerHand, 'wager_reclaim')
+    def _PayOutHand(self, gamblerHand, payoutEnum):
         
-        # Pay out winning blackjack hands 3:2 and reclaim the wager
-        elif payout_type == 'blackjack':
-            self.perform_hand_payout(gamblerHand, 'winning_wager', '3:2')
-            self.perform_hand_payout(gamblerHand, 'wager_reclaim')
+        match payoutEnum:
+            case PayoutType.Wager:
+                self._PerformHandPayout(gamblerHand, PayoutActionType.WinningWager, '1:1')
+                self._PerformHandPayout(gamblerHand, PayoutActionType.WagerReclaim)
+            case PayoutType.Insurance:
+                self._PerformHandPayout(gamblerHand, PayoutActionType.WinningInsurance, '2:1')
+                self._PerformHandPayout(gamblerHand, PayoutActionType.InsuranceReclaim)
+            case PayoutType.Blackjack:
+                self._PerformHandPayout(gamblerHand, PayoutActionType.WinningWager, '3:2')
+                self._PerformHandPayout(gamblerHand, PayoutActionType.WagerReclaim)
+            case PayoutType.Push:
+                self._PerformHandPayout(gamblerHand, PayoutActionType.WagerReclaim)
+            case _:
+                raise ValueError(f"Invalid payout type: '{payoutEnum}'")
+            
 
-        # Pay out winning insurance wagers 2:1 and reclaim the insurance wager
-        elif payout_type == 'insurance':
-            self.perform_hand_payout(gamblerHand, 'winning_insurance', '2:1')
-            self.perform_hand_payout(gamblerHand, 'insurance_reclaim')
-        
-        # Reclaim wager in case of a push
-        elif payout_type == HandOutcome.Push:
-            self.perform_hand_payout(gamblerHand, 'wager_reclaim')
-        
-        # Should not get here
-        else:
-            raise ValueError(f"Invalid payout type: '{payout_type}'")
-
-    def perform_hand_payout(self, gamblerHand, payout_type, odds=None):
+    def _PerformHandPayout(self, gamblerHand, payoutType, odds=None):
         """Determine gamblerHand winnings and execute the payout."""
         # Validate args passed in
-        if payout_type in ('winning_wager', 'winning_insurance'):
-            assert odds, 'Must specify odds for wager and insurance payouts!'
+        if payoutType in (PayoutActionType.WinningWager, PayoutActionType.WinningInsurance):
+            assert odds, 'Must specify odds for wager and insurance payouts'
             antecedent, consequent = map(int, odds.split(':'))
         
-        # Determine the payout amount by the payout_type (and odds if applicable)
-        if payout_type == 'winning_wager':
-            amount = gamblerHand.Wager * antecedent / consequent
-            message = f"Adding winning gamblerHand payout of {LoggingController.GetMoneyFormat(amount)} to bankroll."
-        
-        elif payout_type == 'wager_reclaim':
-            amount = gamblerHand.Wager
-            message = f"Reclaiming gamblerHand wager of {LoggingController.GetMoneyFormat(amount)}."
-        
-        elif payout_type == 'winning_insurance':
-            amount = gamblerHand.insurance * antecedent / consequent
-            message = f"Adding winning insurance payout of {LoggingController.GetMoneyFormat(amount)} to bankroll."
-        
-        elif payout_type == 'insurance_reclaim':
-            amount = gamblerHand.insurance
-            message = f"Reclaiming insurance wager of {LoggingController.GetMoneyFormat(amount)}."
+        match payoutType:
+            case PayoutActionType.WinningWager:
+                amount = gamblerHand.Wager * antecedent / consequent
+            case PayoutActionType.WagerReclaim:
+                amount = gamblerHand.Wager
+            case PayoutActionType.WinningInsurance:
+                amount = gamblerHand.insurance * antecedent / consequent
+            case _:
+                raise ValueError(f"Invalid payout type: '{payoutType}'")
 
-        else:
-            raise ValueError(f"Invalid payout type: '{payout_type}'")
+        gamblerHand.Earnings += amount
+        self._gambler.AddToBankroll(amount)
+        # self._AddActivity(f"Hand {gamblerHand.hand_number}: {message}")
 
-        gamblerHand.earnings += amount
-        self._gambler.payout(amount)
-        self._AddActivity(f"Hand {gamblerHand.hand_number}: {message}")
-
-    def determine_hand_outcome(self, gamblerHand, dealer_hand):
+    def _DetermineHandOutcome(self, gamblerHand, dealerHand):
         """Determine a gamblerHand's outcome against a dealer gamblerHand if it is not yet known."""
         # If the gamblerHand is busted it's a loss
-        if gamblerHand.Status == 'Busted':
+        if gamblerHand.Status == HandStatus.Busted:
             self._SetHandOutcome(gamblerHand, HandOutcome.Loss)
 
         # If the gamblerHand is not busted and the dealer's gamblerHand is busted it's a win
-        elif dealer_hand.Status == 'Busted':
+        elif dealerHand.Status == HandStatus.Busted :
             self._SetHandOutcome(gamblerHand, HandOutcome.Win)
 
         # If neither gambler nor dealer gamblerHand is busted, compare totals to determine wins and losses.
         else:
-            hand_total = gamblerHand.final_total()
-            dealer_hand_total = dealer_hand.final_total()
+            gamblerTotal = gamblerHand.CurrentTotal()
+            dealerTotal = dealerHand.CurrentTotal()
 
-            if hand_total > dealer_hand_total:
+            if gamblerTotal > dealerTotal:
                 self._SetHandOutcome(gamblerHand, HandOutcome.Win)
-            elif hand_total == dealer_hand_total:
+            elif gamblerTotal == dealerTotal:
                 self._SetHandOutcome(gamblerHand, HandOutcome.Push)
             else:
                 self._SetHandOutcome(gamblerHand, HandOutcome.Loss)
 
-    def settle_hand(self, gamblerHand):
+
+    def SettleHand(self, gamblerHand):
         """Settle any outstanding wagers on a gamblerHand (relative to the dealer's gamblerHand)."""
         # Determine the outcome of the gamblerHand against the dealer's if the outcome is unknown
-        if not gamblerHand.outcome:
-            self.determine_hand_outcome(gamblerHand, self._dealer.Hand)
+        if not gamblerHand.Outcome:
+            self._DetermineHandOutcome(gamblerHand, self._dealer.Hand)
 
-        # Perform payout based on the gamblerHand outcome
-        if gamblerHand.outcome == HandOutcome.Win:
-            if gamblerHand.Status == 'Blackjack':
-                self._PayOutHand(gamblerHand, 'blackjack')
-            else:
-                self._PayOutHand(gamblerHand, 'wager')
-
-        elif gamblerHand.outcome == HandOutcome.Push:
-            self._PayOutHand(gamblerHand, HandOutcome.Push)
-
-        elif gamblerHand.outcome == 'Even Money':
-            self._PayOutHand(gamblerHand, 'wager')
-
-        elif gamblerHand.outcome == HandOutcome.InsuranceWin:
-            self._PayOutHand(gamblerHand, 'insurance')
-
-        elif gamblerHand.outcome == HandOutcome.Loss:
-            self._AddActivity(f"Hand {gamblerHand.hand_number}: Forfeiting gamblerHand wager of {LoggingController.GetMoneyFormat(gamblerHand.Wager)}.")
-
-        else:
-            raise ValueError(f"Unhandled gamblerHand outcome: {gamblerHand.outcome}")
-
+        match gamblerHand.Outcome:
+            case HandOutcome.Win:
+                if gamblerHand.Status == HandStatus.Blackjack:
+                    self._PayOutHand(gamblerHand, PayoutType.Blackjack)
+                else:
+                    self._PayOutHand(gamblerHand, PayoutType.Wager)
+            case HandOutcome.Push:
+                self._PayOutHand(gamblerHand, PayoutType.Push)
+        #The hand is a loss if it is not a win or a push.
+            
+            
     def _SettleUp(self):
         """For each of the gambler's hands, settle wagers against the dealer's gamblerHand."""
         for gamblerHand in self._gambler.Hands:
-            self.settle_hand(gamblerHand)
+            self.SettleHand(gamblerHand)
 
-    def track_metrics(self):
-        """Update the tracked metrics with the current turn's data."""
-        # Track gambler gamblerHand metrics
-        for gamblerHand in self._gambler.Hands:
-            self.metric_tracker.process_gamblerHand(gamblerHand)
+
+    # def track_metrics(self):
+    #     """Update the tracked metrics with the current turn's data."""
+    #     # Track gambler gamblerHand metrics
+    #     for gamblerHand in self._gambler.Hands:
+    #         self.metric_tracker.process_gamblerHand(gamblerHand)
         
-        # Track dealer gamblerHand metrics
-        self.metric_tracker.process_dealer_hand(self._dealer.Hand)
+    #     # Track dealer gamblerHand metrics
+    #     self.metric_tracker.process_dealer_hand(self._dealer.Hand)
 
-        # Track gambler's bankroll through time
-        self.metric_tracker.append_bankroll(self._dealer.Bankroll)
+    #     # Track gambler's bankroll through time
+    #     self.metric_tracker.append_bankroll(self._dealer.Bankroll)
 
     def _FinalizeTurn(self):
         """Clean up the current turn in preparation for the next turn."""
         # Render the final status of the turn if applicable.
-        if self.verbose:
-            self.render()
-        
         # Update tracked metrics
-        self.track_metrics()
+        
+        #self.track_metrics()
 
         # Reset the activity log for the next turn.
         self._activity = []
-
-        # Discard both the gambler and the dealer's hands.
-        self._gambler.discard_hands()
-        self._dealer.discard_hand()
+        allDiscardIds = []
+        gamblerDiscards = []
         
-        # Reset hide_dealer for the next turn.
-        self.hide_dealer = True
+        # For each of the gambler's hands, discard the cards and reset the status.
+        gamblerHands = self._gambler.GetAllHands()
+        for gamblerHand in gamblerHands:
+            cardIds = self._StripCardsToId(gamblerHand.Cards)  # Strip the cards from the gamblerHand
+            allDiscardIds.append(cardIds)  # Append the gamblerHand cards to the discard tray
 
-        # Pause exectution until the user wants to proceed if applicable.
-        if self.verbose:
-            input('Push ENTER to proceed => ')
+        dealerDiscard = self._dealer.Hand.Discard()
+        dealerDiscardIds = self._StripCardsToId(gamblerHand.Cards)  
+        allDiscardIds.append(dealerDiscardIds)
+
+        numpyIds = np.array(gamblerDiscards, dealerDiscard)  # Append the gamblerHand and dealer gamblerHand cards to the discard tray
+        self._discardTray.AddCards(numpyIds) 
+
+
+    def _StripCardsToId(self, cardArray):
+        """Strip the cards from the gambler and dealer hands."""
+        # Strip the cards from the gambler and dealer hands.
+        cardIds = []   
+        for card in cardArray:
+            cardIds.append(card.CardId)
+
+        return cardIds
 
 
     def finalize_game(self):
@@ -578,7 +559,7 @@ class GameController:
         
         # Print a final message after the gambler is finished
         if self._gambler.auto_wager == 0 or self.turn == self.max_turns:
-            action = f"{self._gambler.name} cashed out with bankroll: {LoggingController.GetMoneyFormat(self._dealer.Bankroll)}."
+            action = f"{self._gambler.name} cashed out with bankroll: {self._loggingController.GetMoneyFormat(self._dealer.Bankroll)}."
             message = 'Thanks for playing!'
         else:
             action = f"{self._gambler.name} is out of money."

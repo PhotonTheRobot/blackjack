@@ -1,6 +1,3 @@
-from blackjack.Models.Hand import Hand
-from blackjack.Models.Exceptions.InsufficientBankrollException import InsufficientBankrollException
-from blackjack.Models.Exceptions.OverdraftException import OverdraftException
 
 #Participant class
 class Participant:
@@ -21,8 +18,12 @@ class Participant:
     def __init__(self, hands=[]):
         self._hands = hands
 
-    def DiscardHands(self):
+    def Discard(self):
         """Empty the hand."""
+        cardsToDiscard = []
+        for hand in self._hands:
+            cardsToDiscard += hand.Discard()
+        cardsToDiscard = self._hands
         self._hands = []
         
     def GetAllHands(self):

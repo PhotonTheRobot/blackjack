@@ -123,3 +123,12 @@ class Hand:
         if wager == 0:
             wager = self._defaultWager
         self._wager = wager
+        
+    def Discard(self):
+        """Empty the hand."""
+        cardsToDiscard = self._cards
+        
+        for card in self._cards:
+            self._cards = []
+            
+        return cardsToDiscard

@@ -87,11 +87,11 @@ class SingleGameAnalyzer:
 
             --- Bankroll ---
             
-            Winnings: {LoggingController.GetMoneyFormat(winnings_gross)} ({pct_format(winnings_pct)})
+            Winnings: {_loggingController.GetMoneyFormat(winnings_gross)} ({pct_format(winnings_pct)})
 
-            Max Bankroll: {LoggingController.GetMoneyFormat(max(self.bankroll_progression))}
-            Min Bankroll: {LoggingController.GetMoneyFormat(min(self.bankroll_progression))}
-            Avg Bankroll: {LoggingController.GetMoneyFormat(mean(self.bankroll_progression))}
+            Max Bankroll: {_loggingController.GetMoneyFormat(max(self.bankroll_progression))}
+            Min Bankroll: {_loggingController.GetMoneyFormat(min(self.bankroll_progression))}
+            Avg Bankroll: {_loggingController.GetMoneyFormat(mean(self.bankroll_progression))}
             """)
         )
 

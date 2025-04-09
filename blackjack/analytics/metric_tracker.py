@@ -1,3 +1,6 @@
+from blackjack.values.HandOutcome import HandOutcome
+
+
 class MetricTracker:
     """Class for tracking game metrics for analytics purposes."""
     

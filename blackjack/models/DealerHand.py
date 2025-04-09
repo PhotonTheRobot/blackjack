@@ -21,7 +21,3 @@ class DealerHand(Hand):
         """Check whether the dealer is showing a face card."""
         upCard = self.UpCard
         return upCard == CardRank.King or upCard == CardRank.Queen or upCard == CardRank.Jack or upCard == CardRank.Ten
-    
-    def DiscardHand(self):
-        """Reset the dealer's hand."""
-        self._hand = []

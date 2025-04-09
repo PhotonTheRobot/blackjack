@@ -6,6 +6,27 @@ class GamblerHand(Hand):
     _wager = 0
     _insurance = 0
     _handNumber = 0
+    _earnings = 0
+    _outcome = None
+    
+    @property
+    def Earnings(self):
+        """Get the summed earnings of the hand."""
+        return self._earnings
+    @Earnings.setter
+    def Earnings(self, value):
+        """Set the summed earnings of the hand."""
+        self._earnings = value
+    
+    @property
+    def Outcome(self):
+        """Get the outcome of the hand."""
+        return self._outcome
+    @Outcome.setter
+    def Outcome(self, value):
+        """Set the outcome of the hand."""
+        self._outcome = value
+    
     
     def __init__(self, cards=None, status=HandStatus.Pending, wager=0, insurance=0, handNumber=0):
         super().__init__(cards, status)
@@ -31,10 +52,10 @@ class GamblerHand(Hand):
     #         f"Hand {self.hand_number}:",
     #         f"Cards: {self}",
     #         f"Total: {self.get_total_to_display()}",
-    #         f"Wager: {LoggingController.GetMoneyFormat(self.wager)}",
+    #         f"Wager: {_loggingController.GetMoneyFormat(self.wager)}",
     #         f"Status: {self.Status}",
     #         f"Outcome: {self.outcome}{extra_outcome}",
-    #         f"Net: {LoggingController.GetMoneyFormat(self.earnings - self.wager - self.insurance)}"
+    #         f"Net: {_loggingController.GetMoneyFormat(self.earnings - self.wager - self.insurance)}"
     #     ]
         
     #     return '\n\t'.join(lines)

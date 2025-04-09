@@ -28,26 +28,28 @@ class AdvancedPlayStrategy():
     def _load_df(strategy_name, csv_type):
         """Load a DataFrame from a CSV for determining actions."""
         csv_path = f"{GLOBAL_DIRECTORY}/csv/{strategy_name}/{csv_type}.csv"
-        return read_csv(csv_path, index_col=0)
+        
+        dataFrame = read_csv(csv_path, index_col=0)
+        return dataFrame
     
-    def GetHandAction(self, hand, options):
+    def GetHandAction(self, gamblerHand, options, dealerUpcard):
         """Get the action to take on the hand ('Hit', 'Stand', etc.)"""
-        # Get the dealer value by which to look up the correct action
-        upCard = hand.UpCard
-        column = self._csvController.GetCardFormat(upCard)
+        formattedUpcard = self._csvController.GetCardFormat(dealerUpcard)
 
         # If splitting is an option, check if that action should be taken first.
         if PlayerActions.Split in options.values():
-            row = hand.Cards[0].csv_format()
+            row = gamblerHand.Cards[0].Rank
             if self.split_df.at[row, column] == Constants.SPLIT_STRING:  # Use Constants.SPLIT_STRING
                 return PlayerActions.Split
 
         # Use the appropriate 'soft' or 'hard' hand DataFrame to decide which action should be taken.
-        row = hand.CurrentTotal()
-        if hand.IsSoft():
-            action = self.soft_df.at[row, column]
+        gamblerTotalCount = gamblerHand.CurrentTotal()
+        
+        if gamblerHand.IsSoft():
+            row = self.soft_df[row]
+            action = self._GetAction(self.soft_df, gamblerTotalCount, formattedUpcard)
         else:
-            action = self.hard_df.at[row, column]
+            action = self._GetAction(self.hard_df, gamblerTotalCount, formattedUpcard)
 
         # Handle the edge case where doubling is the recommended action, but the user doesn't have enough money to do so.
         if action == PlayerActions.Double:
@@ -55,3 +57,25 @@ class AdvancedPlayStrategy():
                 return PlayerActions.Hit
               
         return action
+    
+    
+    def _GetAction(self, dataframe, playerValue, dealerValue):
+        """Get the value from the DataFrame."""
+        result = dataframe.loc[playerValue, str(dealerValue)]
+        
+        match result:
+            case Constants.Hit:
+                value = PlayerActions.Hit
+            case Constants.Stand:
+                value = PlayerActions.Stand
+            case Constants.Double:
+                value = PlayerActions.Double
+            case Constants.Split:
+                value = PlayerActions.Split
+            case Constants.Surrender:
+                value = PlayerActions.Surrender
+            case _:
+                raise ValueError(f"Unknown action: {result}")
+            
+        return value
+        

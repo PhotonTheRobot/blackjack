@@ -11,9 +11,7 @@ class Card:
         self._cardId = cardId
         self._suit = suit
         self._rank = rank 
-        
-        
-        
+
         if rank <= 6:
             self._apValue = 1
         elif rank >= 10:
