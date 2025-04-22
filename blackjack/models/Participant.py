@@ -24,7 +24,7 @@ class Participant:
         for hand in self._hands:
             cardsToDiscard += hand.Discard()
         cardsToDiscard = self._hands
-        self._hands = []
+        self._hands.clear()
         
     def GetAllHands(self):
         """Get all hands."""

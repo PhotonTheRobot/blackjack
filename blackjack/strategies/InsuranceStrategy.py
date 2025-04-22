@@ -6,7 +6,7 @@ class InsuranceStrategy():
     def __init__(self, minimumTrueValue = 3):
         self._minimumTrueValue = minimumTrueValue
 
-    def WantsInsurance(self, trueCount, dealerHand, gambler):
+    def WantsInsurance(self, trueCount, dealerHand):
         """
         Check if the player should buy insurance based on the true count and dealer's hand.
         """

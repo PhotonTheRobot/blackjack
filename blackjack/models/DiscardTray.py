@@ -1,14 +1,17 @@
  
+import numpy as np
+
+
 class DiscardTray():
 
     def __init__(self):
         self._discardedCardIds = []
 
 
-    def AddCards(self, cards):
+    def AddCards(self, cardIds):
         """Discard a list of cards."""
-        for card in cards:
-            self._discardedCardIds.append(card.CardId)
+        for cardId in cardIds:
+            self._discardedCardIds.append(cardId)
 
 
     def EmptyTray(self):

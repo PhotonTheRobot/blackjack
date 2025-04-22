@@ -6,7 +6,7 @@ from blackjack.values.HandStatus import HandStatus
 class DealerHand(Hand):
     @property
     def UpCard(self):
-        return self.Cards[0]
+        return self._cards[0]
 
     def __init__(self, cards=[], status=None):
         super().__init__(cards, status)
@@ -15,7 +15,7 @@ class DealerHand(Hand):
 
     def IsShowingAce(self):
         """Check whether the dealer is showing an ace."""
-        return self.UpCard == CardRank.Ace
+        return self.UpCard.Rank == CardRank.Ace
 
     def IsShowingFaceCard(self):
         """Check whether the dealer is showing a face card."""

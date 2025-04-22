@@ -18,10 +18,18 @@ class Gambler(Participant):
 
     def __init__(self, gamblerConfig, minBet, hands=[]):
         Participant.__init__(self, hands)
+        self._bankrollPerLoop = gamblerConfig['bankroll']
         self._bankroll = gamblerConfig['bankroll']
         self._trueCountChipMultiplier = gamblerConfig['trueCountChipMultiplier']
         self._minBet = minBet
         self._currentTrueCountWager = minBet
+        
+    def Reset(self):
+        """Reset the gambler's bankroll."""
+        self._bankroll = self._bankrollPerLoop
+        self._isRuined = False
+        self._hands.clear()
+        self._currentTrueCountWager = self._minBet
 
         
     def CanPlaceWager(self, wager=0):
@@ -79,11 +87,11 @@ class Gambler(Participant):
             hand.SettleUp(dealer_hand)
 
 
-    def DoubleDown(self, handNumber):
+    def DoubleDown(self, handNumber, trueCount):
         """Double down on a hand."""
         hand = self._hands[handNumber]
         wager = hand.Wager
-        self.PlaceWager(wager, handNumber)
+        self.PlaceWager(handNumber, trueCount)
         hand.double_down = True
     
     

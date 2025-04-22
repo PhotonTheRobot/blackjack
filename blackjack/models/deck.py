@@ -11,13 +11,13 @@ class Deck:
                  CardRank.Six, CardRank.Seven, CardRank.Eight, CardRank.Nine, CardRank.Ten,
                  CardRank.Jack, CardRank.Queen, CardRank.King]
     
-    _cards = np.full(52, -1, dtype=int)
+    _cardIds = []
     _cardLookup = {}
     
     
     @property
-    def Cards(self):
-        return self._cards
+    def CardIds(self):
+        return self._cardIds
     
     @property
     def CardLookup(self):
@@ -36,6 +36,6 @@ class Deck:
         for suit in self._allSuits:
             for rank in self._allRanks:
                 # Starting at Rank-2 because the lowest card value is 2
-                self._cardLookup[cardId] = Card(cardId, suit, rank)
-                self._cards[cardId - 1] = cardId
+                self._cardLookup[cardId - 1] = Card(cardId, suit, rank)
+                self._cardIds.append(cardId)
                 cardId += 1

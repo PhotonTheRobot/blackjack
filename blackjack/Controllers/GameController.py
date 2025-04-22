@@ -5,6 +5,7 @@ from time import sleep
 import numpy as np
 
 from blackjack.Controllers.LoggingController import LoggingController
+from blackjack.Models.DiscardTray import DiscardTray
 from blackjack.analytics.metric_tracker import MetricTracker
 from blackjack.Models.DealerHand import DealerHand
 from blackjack.Models.GamblerHand import GamblerHand
@@ -54,13 +55,13 @@ class GameController:
     _metricTracker = None
     _baseChip = None
 
-    def __init__(self, gambler, dealer, shoe, penetration, minBet=15, maxBet=1000, baseChip=25, maxTurnsPerIteration=1000, maxIterations=100, logLevel=logging.DEBUG):
+    def __init__(self, gambler, dealer, shoe, penetration, minBet=15, maxBet=1000, baseChip=25, maxTurnsPerIteration=1000, maxIterations=1, logLevel=logging.DEBUG):
         logging.basicConfig(level=logLevel, format='%(asctime)s - %(levelname)s - %(message)s')
         
         self._logger.info('GameController initialization started...')    
         
         # Configured models from game setup
-        self._discardTray = np.array  # Discard tray for the game
+        self._discardTray = DiscardTray()
         self._gambler = gambler
         self._dealer = dealer
         self._shoe = shoe
@@ -73,13 +74,11 @@ class GameController:
         self._betStrategy = BetSpreadStrategy(self._minimumBet, self._maximumBet, self._baseChip)
         self._blackjackStrategy = AdvancedPlayStrategy()
         self._insuranceStrategy = InsuranceStrategy()
-        # self._sideBetStrategy = SideBetStrategy()
-        
+
         self._dealerPlaying = False  # Switch for when dealer is playing and no user actions available
 
         # Keep track of number of turns played (and the max number of turns to play if applicable)
-        self._turn = 0
-        self._maxTurns = maxTurnsPerIteration
+        self._iteration = 0
         self._maxIterations = maxIterations
 
         # Metric tracking (for analytics)
@@ -94,7 +93,6 @@ class GameController:
         self._logger.debug(f"  Minimum Bet: {self._minimumBet}")
         self._logger.debug(f"  Maximum Bet: {self._maximumBet}")
         self._logger.debug(f"  Base Chip Value: {self._baseChip}")
-        self._logger.debug(f"  Max Turns Per Iteration: {self._maxTurns}")
         self._logger.debug(f"  Max Iterations: {self._maxIterations}")
         self._logger.debug(f"  Log Level: {logLevel}")        
         
@@ -109,54 +107,54 @@ class GameController:
         self._metricTracker.append_bankroll(self._gambler.Bankroll)
 
         # Play the game to completion
-        while self._IsAbleToPlay():
-            self._turn += 1
+        
+        while True:
+            while self._IsAbleToPlay():
+                self._iteration += 1
 
-            # Vet the gambler's auto-wager against their bankroll, and ask if they would like to change their wager or cash out.
-            self._DetermineAndSetWager()
+                # Vet the gambler's auto-wager against their bankroll, and ask if they would like to change their wager or cash out.
+                self._DetermineAndSetWager()
 
-            # Deal 2 cards from the shoe to the gambler's and the dealer's hands. Place the gambler's auto-wager on the gamblerHand.
-            self._Deal()
+                # Deal 2 cards from the shoe to the gambler's and the dealer's hands. Place the gambler's auto-wager on the gamblerHand.
+                self._Deal()
 
-            # Carry out pre-turn flow (for blackjacks, insurance, etc).
-            self._PlayPreTurn()
+                # Carry out pre-turn flow (for blackjacks, insurance, etc).
+                self._PlayPreTurn()
+                
+                # sideBetActive = self.sideBetActive()
+                # if sideBetActive: 
+                #     self.placeSideBet()
+                
+                # Play the gambler's turn (if necessary).
+                self._PlayGamblerTurn()
+
+                # Play the dealer's turn (if necessary).
+                self._PlayDealerTurn()
+                
+                # if sideBetActive:
+                #     self.settleSideBet()
+
+                # Settle gambler gamblerHand wins and losses.
+                self._SettleUp()
+
+                # Track metrics and reset in order to proceed with the next turn.
+                self._FinalizeTurn()
+                
+            self._discardTray.EmptyTray()  # Empty the discard tray and get the cards to shuffle
+            self._shoe.ResetShoe()
+            self._gambler.Reset()
             
-            # sideBetActive = self.sideBetActive()
-            # if sideBetActive: 
-            #     self.placeSideBet()
+            self.finalize_game()
             
-            # Play the gambler's turn (if necessary).
-            self._PlayGamblerTurn()
-
-            # Play the dealer's turn (if necessary).
-            self._PlayDealerTurn()
+            if self._iteration >= self._maxIterations:
+                self._logger.info('Max iterations reached. Ending game.')
+                break
             
-            # if sideBetActive:
-            #     self.settleSideBet()
-
-            # Settle gambler gamblerHand wins and losses.
-            self._SettleUp()
-
-            # Track metrics and reset in order to proceed with the next turn.
-            self._FinalizeTurn()
-            
-        cardsToShuffle = self._shoe.DiscardTray.EmptyTray()  # Empty the discard tray and get the cards to shuffle
-
-        # Render a game over message
-        self.finalize_game()
 
     def _IsAbleToPlay(self):
         """Return True to play another turn, False otherwise."""
         # If the gambler is cashed out or out of money there is no turn to play.
-        if not self._gambler.CanPlaceWager():
-            return False
-        
-        # If max number of turns imposed make sure we haven't hit it yet.
-        if self._maxTurns:
-            return self._turn < self._maxTurns
-        
-        # If the shoe has been penetrated, shuffle it and reset the penetration.
-        if self._shoe.IsLastHand:
+        if not self._gambler.CanPlaceWager() or self._shoe.IsLastHand:
             return False
         
         # Checks have passed, play the turn.
@@ -172,9 +170,7 @@ class GameController:
 
     def _DetermineAndSetWager(self, handNumber=0):
         """Set a new auto-wager amount."""
-        # Set the gambler's auto_wager to $0.00.
-        newWager = self._betStrategy.GetBidValue(self._shoe)
-        self._gambler.PlaceWager(handNumber, newWager)
+        self._gambler.PlaceWager(handNumber, self._shoe.TrueCount)
 
 
     def _Deal(self):
@@ -227,12 +223,12 @@ class GameController:
             # If the gambler does not have blackjack they can buy insurance.
             else:
                 # Gambler must have sufficient bankroll to place an insurance bet.
-                gamblerCanAffordInsurance = self._gambler.CanP()
+                gamblerCanAffordInsurance = self._gambler.CanPlaceWager()
 
-                if gamblerCanAffordInsurance and self._insuranceStrategy.BuyInsurance():
+                if gamblerCanAffordInsurance and self._insuranceStrategy.WantsInsurance( self._shoe.TrueCount , dealerHand):
 
                     # Insurnace is a side bet that is half their wager, and pays 2:1 if dealer has blackjack.
-                    self._gambler.place_insurance_wager()
+                    self._gambler.CheckAndBuyInsurance(0, self._shoe.TrueCount)
 
                     # The turn is over if the dealer has blackjack. Otherwise, continue on to playing the gamblerHand.
                     if dealerHasBlackjack:
@@ -353,8 +349,8 @@ class GameController:
         """Split a gamblerHand."""
         split_card = gamblerHand.Cards.pop(1)  # Pop the second card off the gamblerHand to make a new gamblerHand
         new_hand = GamblerHand(cards=[split_card], hand_number=len(self._gambler.Hands) + 1)  # TODO: Do away with hand_number
-        self._gambler.PlaceWager(gamblerHand.Wager, new_hand)  # Place the same wager on the new gamblerHand
         self._gambler.Hands.append(new_hand)  # Add the gamblerHand to the gambler's list of hands
+        self._gambler.PlaceWager(new_hand, self._shoe.TrueCount )  # Place the same wager on the new gamblerHand
 
     def _DoubleHand(self, gamblerHand):
         """Double a gamblerHand, meaning double the wager on it and hit it with one more card."""
@@ -518,20 +514,23 @@ class GameController:
         # Reset the activity log for the next turn.
         self._activity = []
         allDiscardIds = []
-        gamblerDiscards = []
-        
+
         # For each of the gambler's hands, discard the cards and reset the status.
         gamblerHands = self._gambler.GetAllHands()
         for gamblerHand in gamblerHands:
-            cardIds = self._StripCardsToId(gamblerHand.Cards)  # Strip the cards from the gamblerHand
-            allDiscardIds.append(cardIds)  # Append the gamblerHand cards to the discard tray
-
-        dealerDiscard = self._dealer.Hand.Discard()
-        dealerDiscardIds = self._StripCardsToId(gamblerHand.Cards)  
-        allDiscardIds.append(dealerDiscardIds)
-
-        numpyIds = np.array(gamblerDiscards, dealerDiscard)  # Append the gamblerHand and dealer gamblerHand cards to the discard tray
-        self._discardTray.AddCards(numpyIds) 
+            toDiscard = gamblerHand.Discard()  # Get the cards to discard
+            allDiscardIds += self._StripCardsToId(toDiscard)  # Strip the cards from the gamblerHand
+            #allDiscardIds.append(discardIds)  # Append the gamblerHand cards to the discard tray
+        
+        dealerHands = self._dealer.GetAllHands()
+        for dealerHand in dealerHands:
+            toDiscard = dealerHand.Discard()      
+            allDiscardIds += self._StripCardsToId(toDiscard)       
+            
+        self._discardTray.AddCards(allDiscardIds) 
+        
+        self._gambler.Hands.clear()  # Clear the gambler's hands for the next turn
+        self._dealer.Hands.clear()  # Clear the dealer's hands for the next turn
 
 
     def _StripCardsToId(self, cardArray):
@@ -547,7 +546,7 @@ class GameController:
     def finalize_game(self):
         """Wrap up the game, rendering analytics and creating graphs if necessary."""
         # Render game over message if applicable
-        if self.verbose:
+        if False:
             self.render_game_over()
 
 

@@ -20,7 +20,7 @@ STRATEGY_MAP = {
 
 async def worker(game):
     game.Play()
-    return game.metric_tracker
+    #return game.metric_tracker
 
 async def main():
     # Command line args

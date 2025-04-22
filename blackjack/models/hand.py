@@ -72,7 +72,7 @@ class Hand:
 
     def _GetTotalAces(self):
         """Get the number of Aces in the hand."""
-        totalAces = sum(1 for card in self._cards if card.Suit == CardRank.Ace)
+        totalAces = sum(1 for card in self._cards if card.Rank == CardRank.Ace)
         return totalAces
 
     def _FormatPossibleTotals(self):
@@ -130,5 +130,6 @@ class Hand:
         
         for card in self._cards:
             self._cards = []
-            
+        
+        self._status = HandStatus.Pending
         return cardsToDiscard

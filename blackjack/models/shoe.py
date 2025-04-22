@@ -15,7 +15,7 @@ class Shoe:
     _runningCount = 0
     
     #An array of cards in the shoe. This is a numpy array of integers that represent the card Ids.
-    _cardIds = np.array([], dtype=int) 
+    _cardIds = []
     #A hashtable of cards in the shoe. This is a dictionary that maps the card Id to the card object.
     _cardDictionary = {}
     
@@ -52,25 +52,15 @@ class Shoe:
         prototypicalDeck = Deck() 
         self._cardLookup = prototypicalDeck.CardLookup
 
-        self.decks = [copy(prototypicalDeck) for _ in range(numDecks)]
+        self._decks = [copy(prototypicalDeck) for _ in range(numDecks)]
         self._totalCardsInShoe = numDecks * 52
-        self.startOfLastHand = self._totalCardsInShoe - ( penetration * 52 )        
-        self._cardIds = np.full(self._totalCardsInShoe, -1, dtype=int)
-        
-        deckIndex = 0
-        #Add every card from all of the decks into _cards numpy arra
-        for deck in self.decks:
-            cardIndex = 0
-            deckAdjustment = deckIndex * 52
-            
-            for npCard in deck.Cards:
-                cardId = npCard.item()
+        self._startOfLastHand = self._totalCardsInShoe - ( penetration * 52 )        
+        self._cardIds = []
 
+        for deck in self._decks:
+            for cardId in deck.CardIds:
                 #fill the private variable
-                self._cardIds[cardIndex + deckAdjustment] = cardId
-                cardIndex += 1
-                
-            deckIndex += 1
+                self._cardIds.append(cardId)
 
         self.ResetShoe()
 
@@ -91,7 +81,7 @@ class Shoe:
         cardId = self._cardIds[self._totalCardsDrawn]
 
         #return the card object from a hashtable lookup
-        drawnCard = self._cardLookup[cardId]
+        drawnCard = self._cardLookup[cardId - 1]
         self._runningCount += drawnCard.AdvantagedPlayerValue
         self._totalCardsDrawn += 1
 

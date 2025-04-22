@@ -46,7 +46,6 @@ class AdvancedPlayStrategy():
         gamblerTotalCount = gamblerHand.CurrentTotal()
         
         if gamblerHand.IsSoft():
-            row = self.soft_df[row]
             action = self._GetAction(self.soft_df, gamblerTotalCount, formattedUpcard)
         else:
             action = self._GetAction(self.hard_df, gamblerTotalCount, formattedUpcard)
@@ -61,7 +60,7 @@ class AdvancedPlayStrategy():
     
     def _GetAction(self, dataframe, playerValue, dealerValue):
         """Get the value from the DataFrame."""
-        result = dataframe.loc[playerValue, str(dealerValue)]
+        result = dataframe.at[playerValue, str(dealerValue)]
         
         match result:
             case Constants.Hit:
