@@ -2,8 +2,10 @@
 
 import asyncio
 from argparse import ArgumentParser
+import logging
 
 from AppConfig import GetAppConfig
+from blackjack.Controllers.LoggingController import LoggingController
 from blackjack.Utilities.DisplayUtilities import clear, header
 from blackjack.Utilities.GameSetupUtility import setup_game
 from blackjack.analytics.multi_game_analyzer import MultiGameAnalyzer
@@ -19,7 +21,7 @@ STRATEGY_MAP = {
 
 
 async def worker(game):
-    game.Play()
+    return game.Play()
     #return game.metric_tracker
 
 async def main():
@@ -31,7 +33,6 @@ async def main():
     parser.add_argument('-d', '--decks', help='Number of decks to play with', type=int, default=6)
     parser.add_argument('-p', '--penetration', help='Number of decks worth of penetration', type=float, default=1.0)
     parser.add_argument('-g', '--games', help='Number of games to simulate', type=int, default=1)
-    parser.add_argument('-t', '--turns', help='Max number of turns to play per game', type=int, default=1000)
     args = parser.parse_args()
 
     # Clear the terminal screen.
@@ -47,21 +48,19 @@ async def main():
     for i in range(args.games):
         asyncGames.append(setup_game(configuration))
         
-    taskResults = await asyncio.gather(
+    results = await asyncio.gather(
             #create an asyncio task for each game and run them in parallel
             *(worker(game) for game in asyncGames)
         )
 
-    # Collect the results from each game and combine them into a single list of MetricTrackers.
-    combinedResults = []
-    for result in combinedResults:
-        combinedResults.extend(result)
-
     # Analyze the results of the games
     print(header('ANALYTICS'))
-    analyzer = MultiGameAnalyzer(combinedResults)
+    _logger = logging.getLogger(__name__)
+    _loggingController = LoggingController(_logger)
+    
+    analyzer = MultiGameAnalyzer(results, _loggingController)
     analyzer.print_summary()
-    analyzer.create_plots()
+    # analyzer.create_plots()
 
 
 if __name__ == '__main__':

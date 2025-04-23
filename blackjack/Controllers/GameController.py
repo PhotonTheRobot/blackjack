@@ -6,6 +6,7 @@ import numpy as np
 
 from blackjack.Controllers.LoggingController import LoggingController
 from blackjack.Models.DiscardTray import DiscardTray
+from blackjack.analytics.GameAnalytics import GameAnalytics
 from blackjack.analytics.metric_tracker import MetricTracker
 from blackjack.Models.DealerHand import DealerHand
 from blackjack.Models.GamblerHand import GamblerHand
@@ -54,8 +55,9 @@ class GameController:
     _sideBetStrategy = None
     _metricTracker = None
     _baseChip = None
+    _analytics = None
 
-    def __init__(self, gambler, dealer, shoe, penetration, minBet=15, maxBet=1000, baseChip=25, maxTurnsPerIteration=1000, maxIterations=1, logLevel=logging.DEBUG):
+    def __init__(self, gambler, dealer, shoe, penetration, minBet=15, maxBet=1000, baseChip=25, maxIterations=1, logLevel=logging.ERROR):
         logging.basicConfig(level=logLevel, format='%(asctime)s - %(levelname)s - %(message)s')
         
         self._logger.info('GameController initialization started...')    
@@ -74,12 +76,13 @@ class GameController:
         self._betStrategy = BetSpreadStrategy(self._minimumBet, self._maximumBet, self._baseChip)
         self._blackjackStrategy = AdvancedPlayStrategy()
         self._insuranceStrategy = InsuranceStrategy()
-
+        
+        self._analytics = GameAnalytics()  # Initialize the analytics tracker with the gambler's starting bankroll
         self._dealerPlaying = False  # Switch for when dealer is playing and no user actions available
 
         # Keep track of number of turns played (and the max number of turns to play if applicable)
         self._iteration = 0
-        self._maxIterations = maxIterations
+        self._maxIterations = 1
 
         # Metric tracking (for analytics)
         self._metricTracker = MetricTracker()
@@ -95,20 +98,16 @@ class GameController:
         self._logger.debug(f"  Base Chip Value: {self._baseChip}")
         self._logger.debug(f"  Max Iterations: {self._maxIterations}")
         self._logger.debug(f"  Log Level: {logLevel}")        
-        
-        self._logger.info('GameController initialization complete.')
 
 
     def Play(self):
-        self._logger.info('Play method started.')
-           
-        """Main game loop that controls entire game flow."""
-        # Track the starting bankroll
-        self._metricTracker.append_bankroll(self._gambler.Bankroll)
-
-        # Play the game to completion
+        self._logger.debug(f"")
+        self._logger.debug(f"---------------------------------------------------------------------------")
+        self._logger.debug(f" Starting Bankroll: { self._gambler.Bankroll }")
+        self._logger.debug(f"---------------------------------------------------------------------------")
+        self._logger.debug(f"")
         
-        while True:
+        try:
             while self._IsAbleToPlay():
                 self._iteration += 1
 
@@ -139,17 +138,16 @@ class GameController:
 
                 # Track metrics and reset in order to proceed with the next turn.
                 self._FinalizeTurn()
+                self._logger.debug(f"    Bankroll: { self._gambler.Bankroll }")
                 
             self._discardTray.EmptyTray()  # Empty the discard tray and get the cards to shuffle
             self._shoe.ResetShoe()
             self._gambler.Reset()
+
+        except: 
+            self._logger.exception('An error occurred during the game play.')
             
-            self.finalize_game()
-            
-            if self._iteration >= self._maxIterations:
-                self._logger.info('Max iterations reached. Ending game.')
-                break
-            
+        return self._analytics
 
     def _IsAbleToPlay(self):
         """Return True to play another turn, False otherwise."""
@@ -178,17 +176,11 @@ class GameController:
         # Deal 4 cards from the shoe
         card_1, card_2, card_3, card_4 = self._shoe.DealMultipleCards(4)
         
-        # Take the values of the cards and log them as debugs
-        self._logger.debug(f"Gambler cards: {card_1}, {card_2}, {card_3}, {card_4}")
-
         # Create the Hands from the dealt cards.
         # Deal like they do a casinos --> one card to each player at a time, starting with the gambler.
         self._gambler.Hands.append(GamblerHand(cards=[card_1, card_3]))
-        self._logger.debug(f"Gambler cards: {card_1}, {card_3}")
-        
         self._dealer.Hands.append(DealerHand(cards=[card_2, card_4]))
-        self._logger.debug(f"Dealer cards: {card_2}, {card_4}")
-
+        
         # Place the gambler's auto-wager on the gamblerHand. We've already vetted that they have sufficient bankroll.
         self._gambler.PlaceWager(0, self._shoe.TrueCount)
 
@@ -305,14 +297,19 @@ class GameController:
             match action:
                 case PlayerActions.Hit:
                     self._HitHand(gamblerHand)  # Deal another card and keep playing the gamblerHand.
+                    self._logger.debug(f"Action: Hit")
                 case PlayerActions.Stand:
                     self._SetHandStatus(gamblerHand, HandStatus.Stand)
+                    self._logger.debug(f"Action: Stand")
                 case PlayerActions.Double:
                     self._DoubleHand(gamblerHand)
+                    self._logger.debug(f"Action: Double")
                 case PlayerActions.Split:
                     self._SplitHand(gamblerHand)
+                    self._logger.debug(f"Action: Split")
                 case PlayerActions.Surrender:
                     self._SetHandStatus(gamblerHand, HandStatus.Surrendered)
+                    self._logger.debug(f"Action: Surrender")
                 case _:
                     raise Exception('Bad action.')  # Should never get here
 
@@ -434,7 +431,7 @@ class GameController:
         
         match payoutType:
             case PayoutActionType.WinningWager:
-                amount = gamblerHand.Wager * antecedent / consequent
+                amount = (gamblerHand.Wager * antecedent / consequent) + gamblerHand.Wager
             case PayoutActionType.WagerReclaim:
                 amount = gamblerHand.Wager
             case PayoutActionType.WinningInsurance:
@@ -442,9 +439,9 @@ class GameController:
             case _:
                 raise ValueError(f"Invalid payout type: '{payoutType}'")
 
-        gamblerHand.Earnings += amount
         self._gambler.AddToBankroll(amount)
-        # self._AddActivity(f"Hand {gamblerHand.hand_number}: {message}")
+        self._analytics.AddToPrimaryProfit(amount)
+
 
     def _DetermineHandOutcome(self, gamblerHand, dealerHand):
         """Determine a gamblerHand's outcome against a dealer gamblerHand if it is not yet known."""
@@ -479,30 +476,24 @@ class GameController:
             case HandOutcome.Win:
                 if gamblerHand.Status == HandStatus.Blackjack:
                     self._PayOutHand(gamblerHand, PayoutType.Blackjack)
+                    self._logger.debug(f"Outcome: Blackjack")
                 else:
                     self._PayOutHand(gamblerHand, PayoutType.Wager)
+                    self._logger.debug(f"Outcome: Win")
             case HandOutcome.Push:
                 self._PayOutHand(gamblerHand, PayoutType.Push)
-        #The hand is a loss if it is not a win or a push.
-            
+                self._logger.debug(f"Outcome: Push")
+            case HandOutcome.Loss:
+                lostAmount = -1 * gamblerHand.Wager
+                self._logger.debug(f"Outcome: Loss ({ lostAmount})")
+                self._analytics.AddToPrimaryProfit(lostAmount)
+
             
     def _SettleUp(self):
         """For each of the gambler's hands, settle wagers against the dealer's gamblerHand."""
         for gamblerHand in self._gambler.Hands:
             self.SettleHand(gamblerHand)
 
-
-    # def track_metrics(self):
-    #     """Update the tracked metrics with the current turn's data."""
-    #     # Track gambler gamblerHand metrics
-    #     for gamblerHand in self._gambler.Hands:
-    #         self.metric_tracker.process_gamblerHand(gamblerHand)
-        
-    #     # Track dealer gamblerHand metrics
-    #     self.metric_tracker.process_dealer_hand(self._dealer.Hand)
-
-    #     # Track gambler's bankroll through time
-    #     self.metric_tracker.append_bankroll(self._dealer.Bankroll)
 
     def _FinalizeTurn(self):
         """Clean up the current turn in preparation for the next turn."""
@@ -541,14 +532,7 @@ class GameController:
             cardIds.append(card.CardId)
 
         return cardIds
-
-
-    def finalize_game(self):
-        """Wrap up the game, rendering analytics and creating graphs if necessary."""
-        # Render game over message if applicable
-        if False:
-            self.render_game_over()
-
+    
 
     def render_game_over(self):
         """Print out a final summary message once the game has ended."""

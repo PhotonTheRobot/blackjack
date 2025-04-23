@@ -1,3 +1,4 @@
+import logging
 from blackjack.Models.Hand import Hand
 from blackjack.Models.Participant import Participant
 from blackjack.Models.Exceptions.InsufficientBankrollException import InsufficientBankrollException
@@ -9,6 +10,7 @@ class Gambler(Participant):
     _isRuined = False
     _minBet = 0
     _currentTrueCountWager = 0
+    _logger = logging.getLogger(__name__)
     
     @property
     def Bankroll(self):
@@ -43,11 +45,13 @@ class Gambler(Participant):
     def AddToBankroll(self, amount):
         """Add an amount to the bankroll."""
         self._bankroll += amount
+        self._logger.debug(f'Add to Bankroll: {amount}')
 
 
     def RemoveFromBankroll(self, amount):
         if self.CanPlaceWager():
             self._bankroll -= amount
+            self._logger.debug(f'Remove from Bankroll: {amount}')
         else:
             raise InsufficientBankrollException('Insufficient bankroll to place wager')
 

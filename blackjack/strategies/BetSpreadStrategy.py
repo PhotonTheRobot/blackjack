@@ -18,7 +18,12 @@ class BetSpreadStrategy():
         """
         # Calculate the bet value based on the running count and the shoe.
         if shoe.RunningCount > 0:
-            handBet = shoe.TrueCount * self._trueCountChipValue
+            
+            trueCount = shoe.TrueCount
+            if trueCount  > 6:
+                trueCount = 6
+            
+            handBet = trueCount * self._trueCountChipValue
             if handBet > self._maxBet:
                 return self._maxBet
             return 

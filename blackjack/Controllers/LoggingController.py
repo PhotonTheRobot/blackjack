@@ -13,8 +13,8 @@ class LoggingController:
 
     def __init__(self, logger):
         self._logger = logger
-        self._logger.debug("LoggingController initialized.")
-        
+
+
     def LogCardValue(self, card):
         """Pretty print the card."""    
         match(card.Rank):

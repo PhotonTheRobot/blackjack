@@ -34,4 +34,4 @@ def setup_game(config):
     logLevel = gameplayConfig['logLevel']
 
     # Instantiate and return the central controller of the game.
-    return GameController(gambler, dealer, shoe, penetration, minBet, maxBet, baseChip, maxTurnsPerIteration, maxIterations, logLevel)
+    return GameController(gambler, dealer, shoe, penetration, minBet, maxBet, baseChip, maxIterations, logLevel)
