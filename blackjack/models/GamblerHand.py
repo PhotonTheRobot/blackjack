@@ -41,26 +41,6 @@ class GamblerHand(Hand):
         self.earnings = 0
         self.lost_insurance = False
 
-    # def pretty_format(self):
-    #     """Get a string representation of the hand formatted to be printed."""
-    #     # Display the case where a hand lost it's insurance side bet
-    #     extra_outcome = ''
-    #     if self.lost_insurance:
-    #         extra_outcome += ' (Lost Insurance Bet)'
-        
-    #     lines = [
-    #         f"Hand {self.hand_number}:",
-    #         f"Cards: {self}",
-    #         f"Total: {self.get_total_to_display()}",
-    #         f"Wager: {_loggingController.GetMoneyFormat(self.wager)}",
-    #         f"Status: {self.Status}",
-    #         f"Outcome: {self.outcome}{extra_outcome}",
-    #         f"Net: {_loggingController.GetMoneyFormat(self.earnings - self.wager - self.insurance)}"
-    #     ]
-        
-    #     return '\n\t'.join(lines)
-
-
     def IsSplittable(self):
         """
         Check whether the hand is splittable. 

@@ -1,4 +1,5 @@
 from collections import OrderedDict
+import datetime
 import logging
 from time import sleep
 
@@ -41,7 +42,6 @@ class GameController:
     _verbose = "verbose"
     _maxTurns = None
     _dealerPlaying = None
-    _activity = None
     _turn = None
     
     #objects
@@ -84,38 +84,41 @@ class GameController:
         self._iteration = 0
         self._maxIterations = 1
 
-        # Metric tracking (for analytics)
+        # Metric tracking (for analytics)``
         self._metricTracker = MetricTracker()
         
         #logging the initialization parameters
-        self._logger.debug('GameController initialized with the following parameters:')
-        self._logger.debug(f"  Gambler: {self._gambler}")
-        self._logger.debug(f"  Dealer: {self._dealer}")
-        self._logger.debug(f"  Shoe: {self._shoe}")
-        self._logger.debug(f"  Penetration: {self._penetration}")
-        self._logger.debug(f"  Minimum Bet: {self._minimumBet}")
-        self._logger.debug(f"  Maximum Bet: {self._maximumBet}")
-        self._logger.debug(f"  Base Chip Value: {self._baseChip}")
-        self._logger.debug(f"  Max Iterations: {self._maxIterations}")
-        self._logger.debug(f"  Log Level: {logLevel}")        
+        self._logger.debug(f'{datetime.datetime.now()} - GameController initialized with the following parameters:')
+        self._logger.debug(f'{datetime.datetime.now()}  - Gambler: {self._gambler}')
+        self._logger.debug(f'{datetime.datetime.now()}  - Dealer: {self._dealer}')
+        self._logger.debug(f'{datetime.datetime.now()}  - Shoe: {self._shoe}')
+        self._logger.debug(f'{datetime.datetime.now()}  - Penetration: {self._penetration}')
+        self._logger.debug(f'{datetime.datetime.now()}  - Minimum Bet: {self._minimumBet}')
+        self._logger.debug(f'{datetime.datetime.now()}  - Maximum Bet: {self._maximumBet}')
+        self._logger.debug(f'{datetime.datetime.now()}  - Base Chip Value: {self._baseChip}')
+        self._logger.debug(f'{datetime.datetime.now()}  - Max Iterations: {self._maxIterations}')
+        self._logger.debug(f'{datetime.datetime.now()}  - Log Level: {logLevel}')        
 
 
     def Play(self):
-        self._logger.debug(f"")
-        self._logger.debug(f"---------------------------------------------------------------------------")
-        self._logger.debug(f" Starting Bankroll: { self._gambler.Bankroll }")
-        self._logger.debug(f"---------------------------------------------------------------------------")
-        self._logger.debug(f"")
+        self._logger.debug(f'{datetime.datetime.now()}')
+        self._logger.debug(f'{datetime.datetime.now()} ---------------------------------------------------------------------------')
+        self._logger.debug(f'{datetime.datetime.now()} Starting Bankroll: { self._gambler.Bankroll }')
+        self._logger.debug(f'{datetime.datetime.now()} ---------------------------------------------------------------------------')
+        self._logger.debug(f'{datetime.datetime.now()}')
         
         try:
             while self._IsAbleToPlay():
+                self._logger.debug(f'{datetime.datetime.now()} = Bankroll: { self._gambler.Bankroll }')
+                self._logger.debug(f'{datetime.datetime.now()} ====================================================')
+                                   
                 self._iteration += 1
-
-                # Vet the gambler's auto-wager against their bankroll, and ask if they would like to change their wager or cash out.
-                self._DetermineAndSetWager()
 
                 # Deal 2 cards from the shoe to the gambler's and the dealer's hands. Place the gambler's auto-wager on the gamblerHand.
                 self._Deal()
+                
+                # Vet the gambler's auto-wager against their bankroll, and ask if they would like to change their wager or cash out.
+                self._DetermineAndSetWager()
 
                 # Carry out pre-turn flow (for blackjacks, insurance, etc).
                 self._PlayPreTurn()
@@ -138,7 +141,9 @@ class GameController:
 
                 # Track metrics and reset in order to proceed with the next turn.
                 self._FinalizeTurn()
-                self._logger.debug(f"    Bankroll: { self._gambler.Bankroll }")
+                
+                self._logger.debug(f'{datetime.datetime.now()}') 
+
                 
             self._discardTray.EmptyTray()  # Empty the discard tray and get the cards to shuffle
             self._shoe.ResetShoe()
@@ -158,14 +163,6 @@ class GameController:
         # Checks have passed, play the turn.
         return True
 
-    @render_after
-    def _AddActivity(self, *messages):
-        """Add message(s) to the activity log."""
-        # Add all messages
-        for message in messages:
-            self._activity.append(message)
-
-
     def _DetermineAndSetWager(self, handNumber=0):
         """Set a new auto-wager amount."""
         self._gambler.PlaceWager(handNumber, self._shoe.TrueCount)
@@ -180,12 +177,7 @@ class GameController:
         # Deal like they do a casinos --> one card to each player at a time, starting with the gambler.
         self._gambler.Hands.append(GamblerHand(cards=[card_1, card_3]))
         self._dealer.Hands.append(DealerHand(cards=[card_2, card_4]))
-        
-        # Place the gambler's auto-wager on the gamblerHand. We've already vetted that they have sufficient bankroll.
-        self._gambler.PlaceWager(0, self._shoe.TrueCount)
 
-        # Log it
-        #self._AddActivity('Dealing hands.')
 
     def _PlayPreTurn(self):
         """Carry out pre-turn flow for blackjacks and insurance."""
@@ -297,19 +289,14 @@ class GameController:
             match action:
                 case PlayerActions.Hit:
                     self._HitHand(gamblerHand)  # Deal another card and keep playing the gamblerHand.
-                    self._logger.debug(f"Action: Hit")
                 case PlayerActions.Stand:
                     self._SetHandStatus(gamblerHand, HandStatus.Stand)
-                    self._logger.debug(f"Action: Stand")
                 case PlayerActions.Double:
                     self._DoubleHand(gamblerHand)
-                    self._logger.debug(f"Action: Double")
                 case PlayerActions.Split:
                     self._SplitHand(gamblerHand)
-                    self._logger.debug(f"Action: Split")
                 case PlayerActions.Surrender:
                     self._SetHandStatus(gamblerHand, HandStatus.Surrendered)
-                    self._logger.debug(f"Action: Surrender")
                 case _:
                     raise Exception('Bad action.')  # Should never get here
 
@@ -363,7 +350,8 @@ class GameController:
     @render_after
     def _SetHandOutcome(self, gamblerHand, outcome):
         """Set the outcome of the gamblerHand, and change the status if applicable."""
-        gamblerHand.Outcome = outcome        
+        gamblerHand.Outcome = outcome   
+        self._logger.debug(f'{datetime.datetime.now()} - Outcome: {str(outcome)}')
         if gamblerHand.Status == 'Pending':
             gamblerHand.Status = 'Played'
 
@@ -377,7 +365,7 @@ class GameController:
             self._dealerPlaying = False
             return
 
-        self._AddActivity("Playing the Dealer's turn.")
+        self._AddActivity('Playing the Dealer\'s turn.')
 
         # Grab the dealer's lone gamblerHand to be played
         dealerHand = self._dealer.Hand
@@ -423,6 +411,7 @@ class GameController:
             
 
     def _PerformHandPayout(self, gamblerHand, payoutType, odds=None):
+        isWinPayout = False
         """Determine gamblerHand winnings and execute the payout."""
         # Validate args passed in
         if payoutType in (PayoutActionType.WinningWager, PayoutActionType.WinningInsurance):
@@ -431,7 +420,8 @@ class GameController:
         
         match payoutType:
             case PayoutActionType.WinningWager:
-                amount = (gamblerHand.Wager * antecedent / consequent) + gamblerHand.Wager
+                amount = gamblerHand.Wager * antecedent / consequent
+                isWinPayout = True
             case PayoutActionType.WagerReclaim:
                 amount = gamblerHand.Wager
             case PayoutActionType.WinningInsurance:
@@ -439,7 +429,7 @@ class GameController:
             case _:
                 raise ValueError(f"Invalid payout type: '{payoutType}'")
 
-        self._gambler.AddToBankroll(amount)
+        self._gambler.AddToBankroll(amount, isWinPayout)  # Add the payout to the gambler's bankroll
         self._analytics.AddToPrimaryProfit(amount)
 
 
@@ -476,17 +466,10 @@ class GameController:
             case HandOutcome.Win:
                 if gamblerHand.Status == HandStatus.Blackjack:
                     self._PayOutHand(gamblerHand, PayoutType.Blackjack)
-                    self._logger.debug(f"Outcome: Blackjack")
                 else:
                     self._PayOutHand(gamblerHand, PayoutType.Wager)
-                    self._logger.debug(f"Outcome: Win")
             case HandOutcome.Push:
                 self._PayOutHand(gamblerHand, PayoutType.Push)
-                self._logger.debug(f"Outcome: Push")
-            case HandOutcome.Loss:
-                lostAmount = -1 * gamblerHand.Wager
-                self._logger.debug(f"Outcome: Loss ({ lostAmount})")
-                self._analytics.AddToPrimaryProfit(lostAmount)
 
             
     def _SettleUp(self):
@@ -503,7 +486,6 @@ class GameController:
         #self.track_metrics()
 
         # Reset the activity log for the next turn.
-        self._activity = []
         allDiscardIds = []
 
         # For each of the gambler's hands, discard the cards and reset the status.
@@ -532,20 +514,3 @@ class GameController:
             cardIds.append(card.CardId)
 
         return cardIds
-    
-
-    def render_game_over(self):
-        """Print out a final summary message once the game has ended."""
-        # Show game over message
-        self._logger.info('Game over.')
-        
-        
-        # Print a final message after the gambler is finished
-        if self._gambler.auto_wager == 0 or self.turn == self.max_turns:
-            action = f"{self._gambler.name} cashed out with bankroll: {self._loggingController.GetMoneyFormat(self._dealer.Bankroll)}."
-            message = 'Thanks for playing!'
-        else:
-            action = f"{self._gambler.name} is out of money."
-            message = 'Better luck next time!'
-
-        print(f"{action}\n\n{message}")

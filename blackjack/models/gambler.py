@@ -1,3 +1,4 @@
+import datetime
 import logging
 from blackjack.Models.Hand import Hand
 from blackjack.Models.Participant import Participant
@@ -30,7 +31,7 @@ class Gambler(Participant):
         """Reset the gambler's bankroll."""
         self._bankroll = self._bankrollPerLoop
         self._isRuined = False
-        self._hands.clear()
+        self.Hands.clear()
         self._currentTrueCountWager = self._minBet
 
         
@@ -42,16 +43,17 @@ class Gambler(Participant):
         return wager <= self._bankroll
         
 
-    def AddToBankroll(self, amount):
+    def AddToBankroll(self, amount, isWin = False):
         """Add an amount to the bankroll."""
         self._bankroll += amount
-        self._logger.debug(f'Add to Bankroll: {amount}')
+        if isWin:
+            self._logger.debug(f'{datetime.datetime.now()} - Add to Bankroll: {amount}')
 
 
     def RemoveFromBankroll(self, amount):
         if self.CanPlaceWager():
             self._bankroll -= amount
-            self._logger.debug(f'Remove from Bankroll: {amount}')
+            self._logger.debug(f'{datetime.datetime.now()} - Remove from Bankroll: {amount}')
         else:
             raise InsufficientBankrollException('Insufficient bankroll to place wager')
 
@@ -66,15 +68,15 @@ class Gambler(Participant):
             self._currentTrueCountWager = trueCount * self._trueCountChipMultiplier
         
         self._bankroll -= self._currentTrueCountWager
+        self._logger.debug(f'{datetime.datetime.now()} - Wager: {self._currentTrueCountWager} (TC: {trueCount})')
         if self._bankroll <= 0:
             raise OverdraftException('The player\'s bankroll has been ruined')
         
-        if len(self._hands) > 0:
-            self.Hands[handNumber].SetWager( self._currentTrueCountWager )
+        self.Hands[handNumber].SetWager( self._currentTrueCountWager )
         
 
     def CheckAndBuyInsurance(self, handNumber, trueCount = 0):
-        hand = self._hands[handNumber]
+        hand = self.Hands[handNumber]
         insuranceAmount = hand.Wager / 2
         
         if trueCount > 0:        
@@ -87,13 +89,13 @@ class Gambler(Participant):
 
     def SettleUp(self, dealer_hand):
         """Compare Gambler hands to a given Dealer hand."""
-        for hand in self._hands:
+        for hand in self.Hands:
             hand.SettleUp(dealer_hand)
 
 
     def DoubleDown(self, handNumber, trueCount):
         """Double down on a hand."""
-        hand = self._hands[handNumber]
+        hand = self.Hands[handNumber]
         wager = hand.Wager
         self.PlaceWager(handNumber, trueCount)
         hand.double_down = True
@@ -101,10 +103,10 @@ class Gambler(Participant):
     
     def SplitHand(self, handNumber):
         """Split a hand."""
-        hand = self._hands[handNumber]
+        hand = self.Hands[handNumber]
         wager = hand.Wager
         self.PlaceWager(wager, handNumber)
         
         new_hand = Hand([hand.Cards.pop()])
         new_hand.SetWager(wager)
-        self._hands.append(new_hand)
+        self.Hands.append(new_hand)

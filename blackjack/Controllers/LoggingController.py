@@ -14,36 +14,6 @@ class LoggingController:
     def __init__(self, logger):
         self._logger = logger
 
-
-    def LogCardValue(self, card):
-        """Pretty print the card."""    
-        match(card.Rank):
-            case (1, 11):
-                rankString += "Ace"
-            case 10:
-                rankString += "Ten"
-            case 11:
-                rankString += "Jack"
-            case 12:
-                rankString += "Queen"
-            case 13:
-                rankString += "King"
-            case _:
-                rankString += card.Rank
-        
-        match(card.Suit):
-            case CardSuit.Hearts:
-                suitString += self._heartsIcon
-            case CardSuit.Diamonds:
-                suitString += self._diamondsIcon
-            case CardSuit.Clubs:
-                suitString += self._clubsIcon
-            case CardSuit.Spades:
-                suitString += self._spadesIcon
-
-        result = f'{rankString} of {suitString}'
-        self._logger.debug(result)
-
     def GetMoneyFormat(self, money):
         """Format a monetary value as a string."""
         return "${:0,.2f}".format(money).replace('$-', '-$')

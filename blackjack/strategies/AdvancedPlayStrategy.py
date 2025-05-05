@@ -39,6 +39,7 @@ class AdvancedPlayStrategy():
         # If splitting is an option, check if that action should be taken first.
         if PlayerActions.Split in options.values():
             row = gamblerHand.Cards[0].Rank
+            column = dealerUpcard.Rank
             if self.split_df.at[row, column] == Constants.SPLIT_STRING:  # Use Constants.SPLIT_STRING
                 return PlayerActions.Split
 
